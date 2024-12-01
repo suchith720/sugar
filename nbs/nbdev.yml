@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "sugar"
+  site-url: "https://suchith720.github.io/sugar"
+  description: "Extreme classification dataset scripts"
+  repo-branch: main
+  repo-url: "https://github.com/suchith720/sugar"
