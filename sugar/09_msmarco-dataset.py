@@ -6,7 +6,7 @@ __all__ = ['download_msmarco', 'load_queries', 'load_passages', 'load_qrels', 'c
 
 # %% ../nbs/09_msmarco-dataset.ipynb 2
 from tqdm.auto import tqdm
-import json, pandas as pd, scipy.sparse as sp, numpy as np, argparse
+import os, json, pandas as pd, scipy.sparse as sp, numpy as np, argparse
 from huggingface_hub import snapshot_download
 
 # %% ../nbs/09_msmarco-dataset.ipynb 4
