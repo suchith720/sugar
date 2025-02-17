@@ -113,19 +113,15 @@ def parse_args():
     parser.add_argument('--data_dir', type=str, required=True)
     parser.add_argument('--save_dir', type=str)
     
-    parser.add_argument('--query_filename', type=str)
-    parser.add_argument('--passage_filename', type=str)
-
-    parser.add_argument('--train_qrel_filename', type=str)
-    parser.add_argument('--test_qrel_filename', type=str)
     return parser.parse_args()
     
 
 # %% ../nbs/09_msmarco-dataset.ipynb 15
 if __name__ == '__main__':
     args = parse_args()
-    if args.download: download_msmarco(args.data_dir)
+    if args.download: 
+        download_msmarco(args.data_dir)
     else:
-        construct_msmarco(args.data_dir, args.save_dir, args.query_filename, args.passage_filename, 
-                          args.train_qrel_filename, args.test_qrel_filename)
-    
+        construct_msmarco(args.data_dir, args.save_dir, f'{args.data_dir}/queries.jsonl', f'{args.data_dir}/corpus.jsonl', 
+                          f'{args.data_dir}/qrels/train.tsv', f'{args.data_dir}/qrels/dev.tsv')
+        
