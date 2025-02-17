@@ -6,7 +6,7 @@ __all__ = ['load_raw_txt', 'select_entity', 'load_entities', 'load_data', 'save_
 
 # %% ../nbs/10_msmarco-gpt-entities.ipynb 2
 from tqdm.auto import tqdm
-import json, re, scipy.sparse as sp, pickle, numpy as np
+import json, re, scipy.sparse as sp, pickle, numpy as np, argparse
 
 # %% ../nbs/10_msmarco-gpt-entities.ipynb 3
 def load_raw_txt(fname):

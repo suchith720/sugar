@@ -7,7 +7,7 @@ __all__ = ['load_raw_txt', 'select_entity', 'load_entities', 'load_data', 'save_
 # %% ../nbs/11_msmarco-llama-entities.ipynb 2
 from tqdm.auto import tqdm
 from bs4 import BeautifulSoup
-import json, re, scipy.sparse as sp, pickle, numpy as np
+import json, re, scipy.sparse as sp, pickle, numpy as np, argparse
 
 # %% ../nbs/11_msmarco-llama-entities.ipynb 3
 def load_raw_txt(fname):
