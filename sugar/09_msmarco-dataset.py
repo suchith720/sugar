@@ -90,9 +90,7 @@ def save_qrel_matrix(qrel_fname, queries, pid_to_idx, save_dir, data_type='train
 
 # %% ../nbs/09_msmarco-dataset.ipynb 13
 def construct_msmarco(data_dir:str, save_dir:str, query_fname:str, passage_fname:str, 
-                      train_qrel_fname:str, test_qrel_fname:str, is_download:bool):
-    if is_download: download_msmarco(data_dir)
-    
+                      train_qrel_fname:str, test_qrel_fname:str):
     if not os.path.exists(save_dir): os.makedirs(save_dir, exist_ok=True)
     if not os.path.exists(f'{save_dir}/raw_data'): os.makedirs(f'{save_dir}/raw_data', exist_ok=True)
 
@@ -110,8 +108,6 @@ def construct_msmarco(data_dir:str, save_dir:str, query_fname:str, passage_fname
 # %% ../nbs/09_msmarco-dataset.ipynb 14
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--download', action='store_true')
-    
     parser.add_argument('--data_dir', type=str, required=True)
     parser.add_argument('--save_dir', type=str, required=True)
     
@@ -125,7 +121,15 @@ def parse_args():
 
 # %% ../nbs/09_msmarco-dataset.ipynb 15
 if __name__ == '__main__':
-    args = parse_args()
-    construct_msmarco(args.data_dir, args.save_dir, args.query_filename, args.passage_filename, 
-                      args.train_qrel_filename, args.test_qrel_filename, is_download=args.download)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--download', action='store_true')
+    parser.add_argument('--data_dir', type=str, required=True)
+    args = parser.parse_args()
+    
+    if args.download:
+        download_msmarco(args.data_dir)
+    else:
+        args = parse_args()
+        construct_msmarco(args.data_dir, args.save_dir, args.query_filename, args.passage_filename, 
+                          args.train_qrel_filename, args.test_qrel_filename, is_download=args.download)
     
