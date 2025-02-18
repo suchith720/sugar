@@ -61,7 +61,7 @@ def construct_matrix(query_to_passage, pid_to_idx):
         indices.extend([pid_to_idx[o] for o in pid])
         indptr.append(len(indices))
         
-    mat = sp.csr_matrix((data, indices, indptr), shape=(len(query_id), len(passages)), dtype=np.int64)
+    mat = sp.csr_matrix((data, indices, indptr), shape=(len(query_id), len(pid_to_idx)), dtype=np.int64)
     return mat, query_id
 
 
