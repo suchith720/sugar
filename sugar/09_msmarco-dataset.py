@@ -101,8 +101,8 @@ def construct_msmarco(data_dir:str, save_dir:str, query_fname:str, passage_fname
     save_raw_txt(f'{save_dir}/raw_data/titles.raw.txt', passage_ids, [o[0] for o in passages])
     save_raw_txt(f'{save_dir}/raw_data/passages.raw.txt', passage_ids, [o[1] for o in passages])
 
-    save_qrel_matrix(trn_qrel_fname, queries, pid_to_idx, save_dir=save_dir, data_type='train')
-    save_qrel_matrix(tst_qrel_fname, queries, pid_to_idx, save_dir=save_dir, data_type='test')
+    save_qrel_matrix(train_qrel_fname, queries, pid_to_idx, save_dir=save_dir, data_type='train')
+    save_qrel_matrix(test_qrel_fname, queries, pid_to_idx, save_dir=save_dir, data_type='test')
     
 
 # %% ../nbs/09_msmarco-dataset.ipynb 14
