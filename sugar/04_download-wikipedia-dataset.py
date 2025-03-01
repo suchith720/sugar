@@ -4,12 +4,14 @@
 __all__ = ['download_file', 'get_condition', 'download_wikipedia_dataset', 'parse_args']
 
 # %% ../nbs/04_download-wikipedia-dataset.ipynb 2
-import requests, os, re, argparse, multiprocessing as mp
+import requests, os, re, argparse, multiprocessing as mp, ssl
 from timeit import default_timer as timer
 from functools import partial
 from tqdm.auto import tqdm
 from bs4 import BeautifulSoup
 from urllib.request import urlretrieve
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # %% ../nbs/04_download-wikipedia-dataset.ipynb 3
 def download_file(url, cache_dir):

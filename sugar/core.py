@@ -7,9 +7,10 @@ __all__ = ['load_raw_txt', 'get_all_ids', 'filter_mapping', 'create_vocab_and_it
 # %% ../nbs/00_core.ipynb 2
 import scipy.sparse as sp, numpy as np
 from tqdm.auto import tqdm
+from typing import Dict
 
 # %% ../nbs/00_core.ipynb 3
-def load_raw_txt(fname, encoding='utf-8'):
+def load_raw_txt(fname:str, encoding:str='utf-8'):
     ids, raw_txt = [], []
     with open(fname, 'r', encoding=encoding) as file:
         for line in file:
@@ -20,15 +21,16 @@ def load_raw_txt(fname, encoding='utf-8'):
 
 # %% ../nbs/00_core.ipynb 4
 def get_all_ids(raw_dir, encoding='utf-8'):
-    trn_ids, _ = load_raw_txt(f'{raw_dir}/train.raw.txt', encoding)
-    tst_ids, _ = load_raw_txt(f'{raw_dir}/test.raw.txt', encoding)
-    lbl_ids, _ = load_raw_txt(f'{raw_dir}/label.raw.txt', encoding)
+    trn_ids, _ = load_raw_txt(f'{raw_dir}/train.raw.txt', encoding=encoding)
+    tst_ids, _ = load_raw_txt(f'{raw_dir}/test.raw.txt', encoding=encoding)
+    lbl_ids, _ = load_raw_txt(f'{raw_dir}/label.raw.txt', encoding=encoding)
     return set(trn_ids + tst_ids + lbl_ids)
     
 
 # %% ../nbs/00_core.ipynb 5
 def filter_mapping(mapping, ids):
-    return {k:v for k,v in mapping.items() if k in set(ids)}
+    return {id:mapping[id] for id in ids if id in mapping}
+    
 
 # %% ../nbs/00_core.ipynb 6
 def create_vocab_and_item2idx(mapping):
@@ -42,11 +44,12 @@ def create_vocab_and_item2idx(mapping):
     
 
 # %% ../nbs/00_core.ipynb 7
-def save_raw_txt(fn, ids, raw_txt, encoding='utf-8'):
+def save_raw_txt(fname, ids, raw_txt, encoding='utf-8'):
     assert len(ids) == len(raw_txt), "Number of identifiers and elements in raw text should be the same."
-    with open(fn, 'w', encoding=encoding) as file:
+    with open(fname, 'w', encoding=encoding) as file:
         for i,txt in zip(ids, raw_txt):
             file.write(f'{i}->{txt}\n')
+            
 
 # %% ../nbs/00_core.ipynb 8
 def get_matrix_from_item2idx(mapping, vocab_size, ids=None):
@@ -68,3 +71,4 @@ def get_matrix_from_mapping(mapping, ids=None):
     vocab, mapping_item2idx = create_vocab_and_item2idx(mapping)
     matrix, ids = get_matrix_from_item2idx(mapping_item2idx, len(vocab))
     return matrix, ids, vocab
+    
