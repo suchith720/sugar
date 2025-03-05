@@ -70,8 +70,9 @@ def get_items(cache_dir, condition=default_condition):
     
 
 # %% ../nbs/05_map-amazon-meta-from-dump.ipynb 12
-def load_items(cache_dir:str, data_dir:str, key:str, condition_type=None):
-    cache_file = f'{cache_dir}/products.pkl' if condition_type is None else f'{cache_dir}/products_{condition_type}.pkl'
+def load_items(cache_dir:str, data_dir:str, key:str, condition_type=None, suffix=''):
+    if len(suffix): suffix = f'_{suffix}'
+    cache_file = f'{cache_dir}/products{suffix}.pkl' if condition_type is None else f'{cache_dir}/products_{condition_type}{suffix}.pkl'
 
     try:
         with open(cache_file, 'rb') as file:
@@ -216,6 +217,7 @@ def verify_image(fn):
         im.load()
         return True
     except: return False
+        
 
 # %% ../nbs/05_map-amazon-meta-from-dump.ipynb 38
 def verify_images(fns, n_workers=8):
@@ -241,8 +243,8 @@ def filter_images(image_ids, image_txt, trn_mat, tst_mat, lbl_mat, valid_idx):
     
 
 # %% ../nbs/05_map-amazon-meta-from-dump.ipynb 41
-def process_images(metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat):
-    fnames = download_images(f'{data_dir}/images', urls=metadata_txt)
+def process_images(save_dir, metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat):
+    fnames = download_images(save_dir, urls=metadata_txt)
     
     is_valid = verify_images(fnames)
     remove_images(fnames, is_valid)
@@ -341,13 +343,18 @@ def get_metadata(cache_dir, data_dir, meta_type, key, condition_type, do_filter=
     trn_ids, tst_ids, lbl_ids = get_ids(data_dir)
     trn_mat, tst_mat, lbl_mat = get_matrix(mapping_item2idx, len(metadata_ids), trn_ids, tst_ids, lbl_ids)
 
+    if key == 'images':
+        process_images(f'{data_dir}/images', metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat)
+    elif key == 'videos':
+        raise NotImplementedError('TODO')
+
     if do_filter:
         metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat = filter_vocab(metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat)
         
     return trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_txt
     
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 62
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 63
 def save_metadata(save_dir, trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_txt, metadata_type):
     sp.save_npz(f'{save_dir}/{metadata_type}_trn_X_Y.npz', trn_mat)
     sp.save_npz(f'{save_dir}/{metadata_type}_tst_X_Y.npz', tst_mat)
@@ -357,7 +364,7 @@ def save_metadata(save_dir, trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_tx
     save_raw_txt(f'{save_dir}/raw_data/{metadata_type}.raw.txt', metadata_ids, metadata_txt)
     
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 67
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 68
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--cache_dir', type=str, required=True)
@@ -369,7 +376,7 @@ def parse_args():
     return parser.parse_args()
 
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 68
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 69
 if __name__ == '__main__':
     start_time = timer()
 
