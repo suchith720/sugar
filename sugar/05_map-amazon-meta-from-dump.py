@@ -6,11 +6,10 @@ __all__ = ['METADATA_PROCS', 'default_condition', 'condition_a23', 'get_conditio
            'get_meta_proc', 'extract_meta_info', 'get_vocabulary', 'get_ids', 'get_matrix', 'filter_vocab',
            'get_downloaded_image_filename', 'download_image', 'download_images', 'verify_image', 'verify_images',
            'remove_images', 'filter_images', 'process_images', 'get_downloaded_video_filename', 'download_video',
-           'download_videos', 'verify_video', 'verify_videos', 'remove_videos', 'filter_videos', 'process_videos',
-           'get_metadata', 'save_metadata', 'parse_args']
+           'download_videos', 'process_videos', 'get_metadata', 'save_metadata', 'parse_args']
 
 # %% ../nbs/05_map-amazon-meta-from-dump.ipynb 2
-import json, gzip, argparse, os, pickle, numpy as np, uuid, ssl, scipy.sparse as sp
+import json, gzip, argparse, os, pickle, numpy as np, uuid, ssl, scipy.sparse as sp, requests, mimetypes
 from timeit import default_timer as timer
 from fastdownload import download_url
 from multiprocessing import Pool
@@ -172,7 +171,7 @@ def filter_vocab(vocab_ids, vocab_txt, trn_mat, tst_mat, lbl_mat=None):
     return vocab_ids, vocab_txt, trn_mat, tst_mat, lbl_mat
     
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 34
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 35
 def get_downloaded_image_filename(dest, name, suffix):
     start_index = 1
     candidate_name = name
@@ -184,7 +183,7 @@ def get_downloaded_image_filename(dest, name, suffix):
     return candidate_name
     
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 35
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 36
 def download_image(dest, inp, timeout=4, preserve_filename=False):
     i,url = inp
     url = url.split("?")[0]
@@ -200,7 +199,7 @@ def download_image(dest, inp, timeout=4, preserve_filename=False):
         return None
         
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 36
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 37
 def download_images(dest, urls=None, n_workers=8, timeout=4, preserve_filename=False):
     dest = Path(dest)
     dest.mkdir(exist_ok=True)
@@ -209,7 +208,7 @@ def download_images(dest, urls=None, n_workers=8, timeout=4, preserve_filename=F
     return fnames
     
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 37
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 38
 def verify_image(fn):
     try:
         im = Image.open(fn)
@@ -219,19 +218,19 @@ def verify_image(fn):
     except: return False
         
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 38
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 39
 def verify_images(fns, n_workers=8):
     with Pool(processes=n_workers) as pool:
         return list(tqdm(pool.imap(verify_image, fns), total=len(fns)))
         
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 39
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 40
 def remove_images(fnames, is_valid):
     for fname,v in zip(fnames, is_valid):
         if not v and fname is not None: fname.unlink()
     
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 40
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 41
 def filter_images(image_ids, image_txt, trn_mat, tst_mat, lbl_mat, valid_idx):
     trn_mat = trn_mat[:, valid_idx]
     tst_mat = tst_mat[:, valid_idx]
@@ -242,7 +241,7 @@ def filter_images(image_ids, image_txt, trn_mat, tst_mat, lbl_mat, valid_idx):
     return image_ids, image_txt, trn_mat, tst_mat, lbl_mat
     
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 41
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 42
 def process_images(save_dir, metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat):
     fnames = download_images(save_dir, urls=metadata_txt)
     
@@ -253,7 +252,7 @@ def process_images(save_dir, metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_m
     return filter_images(metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat, np.where(is_valid)[0])
 
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 47
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 48
 def get_downloaded_video_filename(dest, name, suffix):
     start_index = 1
     candidate_name = name
@@ -265,66 +264,42 @@ def get_downloaded_video_filename(dest, name, suffix):
     return candidate_name
     
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 48
-def download_video(dest, inp, timeout=4, preserve_filename=False):
-    i,url = inp
-    url = url.split("?")[0]
-    url_path = Path(url)
-    suffix = url_path.suffix if url_path.suffix else '.jpg'
-    name = get_downloaded_image_filename(dest, url_path.stem, suffix) if preserve_filename else str(uuid.uuid4())
-    try: 
-        dest = dest/f"{name}{suffix}"
-        download_url(url, dest, show_progress=False, timeout=timeout)
-        return dest
-    except Exception as e: 
-        f"Couldn't download {url}."
-        return None
-        
-
 # %% ../nbs/05_map-amazon-meta-from-dump.ipynb 49
+def download_video(dest, url, preserve_filename=False):
+    try:
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            url_path = Path(url.split('/')[-1].split('?')[0])
+            if not url_path.suffix:
+                content_type = response.headers.get('Content-Type')
+                suffix = mimetypes.guess_extension(content_type) if content_type else '.mp4'
+                if not suffix: suffix = '.mp4'
+            
+            name = get_downloaded_video_filename(dest, url_path.stem, suffix) if preserve_filename else str(uuid.uuid4())
+
+            dest = dest/f"{name}{suffix}"
+            with open(dest, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk: f.write(chunk)
+            return dest
+        else:
+            print(f"Failed to download {url}. Status code: {response.status_code}")
+    except Exception as e:
+        print(f"An error occurred while downloading {url}: {e}")
+
+
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 52
 def download_videos(dest, urls=None, n_workers=8, timeout=4, preserve_filename=False):
     dest = Path(dest)
     dest.mkdir(exist_ok=True)
     with Pool(processes=n_workers) as pool:
-        fnames = list(tqdm(pool.imap(partial(download_image, dest, timeout=timeout, preserve_filename=preserve_filename), list(enumerate(urls))), total=len(urls)))
+        fnames = list(tqdm(pool.imap(partial(download_video, dest, preserve_filename=preserve_filename), urls), total=len(urls)))
     return fnames
     
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 50
-def verify_video(fn):
-    try:
-        im = Image.open(fn)
-        im.draft(im.mode, (32,32))
-        im.load()
-        return True
-    except: return False
-
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 51
-def verify_videos(fns, n_workers=8):
-    with Pool(processes=n_workers) as pool:
-        return list(tqdm(pool.imap(verify_image, fns), total=len(fns)))
-        
-
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 52
-def remove_videos(fnames, is_valid):
-    for fname,v in zip(fnames, is_valid):
-        if not v and fname is not None: fname.unlink()
-    
-
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 53
-def filter_videos(image_ids, image_txt, trn_mat, tst_mat, lbl_mat, valid_idx):
-    trn_mat = trn_mat[:, valid_idx]
-    tst_mat = tst_mat[:, valid_idx]
-    lbl_mat = lbl_mat[:, valid_idx]
-    
-    image_ids, image_txt = [image_ids[i] for i in valid_idx], [image_txt[i] for i in valid_idx]
-
-    return image_ids, image_txt, trn_mat, tst_mat, lbl_mat
-    
-
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 54
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 55
 def process_videos(metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat):
-    fnames = download_images(f'{data_dir}/images', urls=metadata_txt)
+    #TODO    
     
     is_valid = verify_images(fnames)
     remove_images(fnames, is_valid)
@@ -333,7 +308,7 @@ def process_videos(metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat):
     return filter_images(metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat, np.where(is_valid)[0])
 
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 61
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 62
 def get_metadata(cache_dir, data_dir, meta_type, key, condition_type, do_filter=True):
     items = load_items(cache_dir, data_dir, key, condition_type)
     
@@ -354,7 +329,7 @@ def get_metadata(cache_dir, data_dir, meta_type, key, condition_type, do_filter=
     return trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_txt
     
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 63
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 64
 def save_metadata(save_dir, trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_txt, metadata_type):
     sp.save_npz(f'{save_dir}/{metadata_type}_trn_X_Y.npz', trn_mat)
     sp.save_npz(f'{save_dir}/{metadata_type}_tst_X_Y.npz', tst_mat)
@@ -364,7 +339,7 @@ def save_metadata(save_dir, trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_tx
     save_raw_txt(f'{save_dir}/raw_data/{metadata_type}.raw.txt', metadata_ids, metadata_txt)
     
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 68
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 69
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--cache_dir', type=str, required=True)
@@ -376,7 +351,7 @@ def parse_args():
     return parser.parse_args()
 
 
-# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 69
+# %% ../nbs/05_map-amazon-meta-from-dump.ipynb 70
 if __name__ == '__main__':
     start_time = timer()
 

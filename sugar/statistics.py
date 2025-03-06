@@ -22,24 +22,25 @@ METADATA_CODE = {'category': 'cat', 'see_also': 'sal', 'hyper_link': 'hlk', 'vid
 class UpdatedDataset:
 
     @staticmethod
-    def load_data_info(data_dir, type):
-        ids, txt = load_raw_txt(f'{data_dir}/raw_data/{type}.raw.txt', encoding='latin-1')
+    def load_data_info(data_dir, type, suffix=''):
+        if len(suffix): suffix = f'.{suffix}'
+        ids, txt = load_raw_file(f'{data_dir}/raw_data/{type}{suffix}.raw.csv')
         return {'identifier':ids, 'input_text':txt}
 
     @staticmethod
     def load_lbl_info(data_dir, x_prefix, y_prefix):
-        ids, txt = load_raw_txt(f'{data_dir}/raw_data/label.{x_prefix}-{y_prefix}.raw.txt')
+        ids, txt = load_raw_file(f'{data_dir}/raw_data/label.{x_prefix}-{y_prefix}.raw.csv')
         return {'identifier':ids, 'input_text':txt}
 
     @staticmethod
     def load_metadata_info(data_dir, metadata_type, x_prefix, y_prefix, z_prefix):
-        ids, txt = load_raw_txt(f'{data_dir}/raw_data/{metadata_type}.{x_prefix}-{y_prefix}-{z_prefix}.raw.txt')
+        ids, txt = load_raw_file(f'{data_dir}/raw_data/{metadata_type}.{x_prefix}-{y_prefix}-{z_prefix}.raw.csv')
         return {'identifier':ids, 'input_text':txt}
 
     @staticmethod
-    def get_trn_tst_info(data_dir):
-        trn_info = UpdatedDataset.load_data_info(data_dir, 'train')
-        tst_info = UpdatedDataset.load_data_info(data_dir, 'test')
+    def get_trn_tst_info(data_dir, suffix=''):
+        trn_info = UpdatedDataset.load_data_info(data_dir, 'train', suffix)
+        tst_info = UpdatedDataset.load_data_info(data_dir, 'test', suffix)
         return trn_info, tst_info
 
     @staticmethod
@@ -72,7 +73,7 @@ class UpdatedDataset:
 
     @staticmethod
     def load_datasets(data_dir, save_dir, metadata_type, x_prefix, y_prefix, z_prefix):
-        trn_info, tst_info = UpdatedDataset.get_trn_tst_info(data_dir)
+        trn_info, tst_info = UpdatedDataset.get_trn_tst_info(save_dir, x_prefix)
         trn_mat, tst_mat, lbl_info = UpdatedDataset.get_labels(save_dir, x_prefix, y_prefix, data_dir)
     
         main_trn_dset = MainXCDataset(trn_info, trn_mat, lbl_info)
@@ -93,25 +94,23 @@ class UpdatedDataset:
 class Dataset:
 
     @staticmethod
-    def load_data_info(data_dir, type):
-        ids, txt = load_raw_txt(f'{data_dir}/raw_data/{type}.raw.txt', encoding='latin-1')
-        return {'identifier':ids, 'input_text':txt}
-
-    @staticmethod
-    def load_lbl_info(data_dir):
-        ids, txt = load_raw_txt(f'{data_dir}/raw_data/label.raw.txt', encoding='latin-1')
+    def load_data_lbl_info(data_dir, type):
+        if os.path.exists(f'{data_dir}/raw_data/{type}.raw.txt'):
+            ids, txt = load_raw_file(f'{data_dir}/raw_data/{type}.raw.txt', encoding='latin-1')
+        else:
+            ids, txt = load_raw_file(f'{data_dir}/raw_data/{type}.raw.csv')
         return {'identifier':ids, 'input_text':txt}
 
     @staticmethod
     def load_metadata_info(data_dir, metadata_type, suffix=''):
         if len(suffix): suffix = f'.{suffix}'
-        ids, txt = load_raw_txt(f'{data_dir}/raw_data/{metadata_type}{suffix}.raw.txt')
+        ids, txt = load_raw_txt(f'{data_dir}/raw_data/{metadata_type}{suffix}.raw.csv')
         return {'identifier':ids, 'input_text':txt}
 
     @staticmethod
     def get_trn_tst_info(data_dir):
-        trn_info = Dataset.load_data_info(data_dir, 'train')
-        tst_info = Dataset.load_data_info(data_dir, 'test')
+        trn_info = Dataset.load_data_lbl_info(data_dir, 'train')
+        tst_info = Dataset.load_data_lbl_info(data_dir, 'test')
         return trn_info, tst_info
 
     @staticmethod
@@ -119,7 +118,7 @@ class Dataset:
         trn_mat = du.read_sparse_file(f'{data_dir}/trn_X_Y.txt') if os.path.exists(f'{data_dir}/trn_X_Y.txt') else sp.load_npz(f'{data_dir}/trn_X_Y.npz')
         tst_mat = du.read_sparse_file(f'{data_dir}/tst_X_Y.txt') if os.path.exists(f'{data_dir}/tst_X_Y.txt') else sp.load_npz(f'{data_dir}/tst_X_Y.npz')
             
-        lbl_info = Dataset.load_lbl_info(data_dir)
+        lbl_info = Dataset.load_data_lbl_info(data_dir, 'label')
         
         return trn_mat, tst_mat, lbl_info
 
