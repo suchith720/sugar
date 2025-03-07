@@ -131,39 +131,41 @@ class Dataset:
 
     @staticmethod
     def get_labels(data_dir, suffix="", encoding='utf-8', lbl_suffix=''):
-        if len(lbl_suffix): suffix = f'_{lbl_suffix}'
-        trn_mat = du.read_sparse_file(f'{data_dir}/trn_X_Y{suffix}.txt') if os.path.exists(f'{data_dir}/trn_X_Y{suffix}.txt') else sp.load_npz(f'{data_dir}/trn_X_Y{suffix}.npz')
-        tst_mat = du.read_sparse_file(f'{data_dir}/tst_X_Y{suffix}.txt') if os.path.exists(f'{data_dir}/tst_X_Y{suffix}.txt') else sp.load_npz(f'{data_dir}/tst_X_Y{suffix}.npz')
+        if len(lbl_suffix): s = f'_{lbl_suffix}'
+        trn_mat = du.read_sparse_file(f'{data_dir}/trn_X_Y{s}.txt') if os.path.exists(f'{data_dir}/trn_X_Y{s}.txt') else sp.load_npz(f'{data_dir}/trn_X_Y{s}.npz')
+        tst_mat = du.read_sparse_file(f'{data_dir}/tst_X_Y{s}.txt') if os.path.exists(f'{data_dir}/tst_X_Y{s}.txt') else sp.load_npz(f'{data_dir}/tst_X_Y{s}.npz')
             
-        lbl_info = Dataset.load_lbl_info(data_dir, 'label', suffix, encoding, lbl_suffix='')
+        lbl_info = Dataset.load_lbl_info(data_dir, 'label', suffix, encoding, lbl_suffix)
         
         return trn_mat, tst_mat, lbl_info
 
     @staticmethod
-    def get_metadata(data_dir, metadata_type, suffix="", encoding='utf-8'):
+    def get_metadata(data_dir, metadata_type, suffix="", encoding='utf-8', lbl_suffix=''):
+        if len(lbl_suffix): s = f'_{lbl_suffix}'
         trn_mat = du.read_sparse_file(f'{data_dir}/{metadata_type}_trn_X_Y.txt') if os.path.exists(f'{data_dir}/{metadata_type}_trn_X_Y.txt') else sp.load_npz(f'{data_dir}/{metadata_type}_trn_X_Y.npz')
         tst_mat = du.read_sparse_file(f'{data_dir}/{metadata_type}_tst_X_Y.txt') if os.path.exists(f'{data_dir}/{metadata_type}_tst_X_Y.txt') else sp.load_npz(f'{data_dir}/{metadata_type}_tst_X_Y.npz')
-        lbl_mat = du.read_sparse_file(f'{data_dir}/{metadata_type}_lbl_X_Y.txt') if os.path.exists(f'{data_dir}/{metadata_type}_lbl_X_Y.txt') else sp.load_npz(f'{data_dir}/{metadata_type}_lbl_X_Y.npz')
+        
+        lbl_mat = du.read_sparse_file(f'{data_dir}/{metadata_type}_lbl_X_Y{s}.txt') if os.path.exists(f'{data_dir}/{metadata_type}_lbl_X_Y{s}.txt') else sp.load_npz(f'{data_dir}/{metadata_type}_lbl_X_Y{s}.npz')
         
         meta_info = Dataset.load_metadata_info(data_dir, metadata_type, suffix, encoding)
         
         return trn_mat, tst_mat, lbl_mat, meta_info
 
     @staticmethod
-    def load_datasets(data_dir, metadata_type, suffix="", encoding='utf-8', main_mat_suffix=''):
+    def load_datasets(data_dir, metadata_type, suffix="", encoding='utf-8', lbl_suffix=''):
         trn_info, tst_info = Dataset.get_trn_tst_info(data_dir, suffix, encoding)
-        trn_mat, tst_mat, lbl_info = Dataset.get_labels(data_dir, suffix, encoding, main_mat_suffix)
+        trn_mat, tst_mat, lbl_info = Dataset.get_labels(data_dir, suffix, encoding, lbl_suffix)
     
         main_trn_dset = MainXCDataset(trn_info, trn_mat, lbl_info)
         main_tst_dset = MainXCDataset(tst_info, tst_mat, lbl_info)
     
-        trn_meta_mat, tst_meta_mat, lbl_meta_mat, meta_info = Dataset.get_metadata(data_dir, metadata_type, suffix, encoding)
+        trn_meta_mat, tst_meta_mat, lbl_meta_mat, meta_info = Dataset.get_metadata(data_dir, metadata_type, suffix, encoding, lbl_suffix)
     
-        trn_meta_dset = MetaXCDataset(METADATA_CODE[metadata_type], trn_meta_mat, lbl_meta_mat, meta_info)
-        tst_meta_dset = MetaXCDataset(METADATA_CODE[metadata_type], tst_meta_mat, lbl_meta_mat, meta_info)
+        trn_meta_dset = {f'{METADATA_CODE[metadata_type]}_meta': MetaXCDataset(METADATA_CODE[metadata_type], trn_meta_mat, lbl_meta_mat, meta_info)}
+        tst_meta_dset = {f'{METADATA_CODE[metadata_type]}_meta': MetaXCDataset(METADATA_CODE[metadata_type], tst_meta_mat, lbl_meta_mat, meta_info)}
     
-        trn_dset = XCDataset(main_trn_dset, cat_meta=trn_meta_dset)
-        tst_dset = XCDataset(main_tst_dset, cat_meta=tst_meta_dset)
+        trn_dset = XCDataset(main_trn_dset, **trn_meta_dset)
+        tst_dset = XCDataset(main_tst_dset, **tst_meta_dset)
     
         return trn_dset, tst_dset
         
@@ -448,8 +450,8 @@ def show_updated_dataset(data_dir, metadata_type, x_prefix, y_prefix, z_prefix, 
     
     return trn_dset, tst_dset
 
-def show_dataset(data_dir, metadata_type, idxs, encoding='utf-8', use_trn=True):
-    trn_dset, tst_dset = Dataset.load_datasets(data_dir, metadata_type, encoding=encoding)
+def show_dataset(data_dir, metadata_type, idxs, encoding='utf-8', lbl_suffix='', use_trn=True):
+    trn_dset, tst_dset = Dataset.load_datasets(data_dir, metadata_type, encoding=encoding, lbl_suffix=lbl_suffix)
     print_dset_stats(trn_dset, tst_dset)
     
     txt_dset = TextDataset(trn_dset if use_trn else tst_dset)

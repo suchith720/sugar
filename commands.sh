@@ -31,3 +31,7 @@ python sugar/10_msmarco-generated-entities.py --data_dir /home/scai/phd/aiz21832
 
 python sugar/10_msmarco-generated-entities.py --data_dir /home/scai/phd/aiz218323/scratch/datasets/msmarco/XC/ --entity_dir /home/scai/phd/aiz218323/scratch/datasets/msmarco/entities/llama/ --entity_type entity --model llama
 
+# Config for MSMARCO
+python sugar/11_msmarco-config-file.py --data_dir /home/scai/phd/aiz218323/scratch/datasets/msmarco/XC/ --model gpt --entity_type entity
+python sugar/11_msmarco-config-file.py --data_dir /home/scai/phd/aiz218323/scratch/datasets/msmarco/XC/ --model llama --entity_type entity
+
