@@ -62,7 +62,7 @@ def save_raw_txt(fname, ids, raw, encoding='utf-8'):
     assert len(ids) == len(raw), "Number of identifiers and elements in raw text should be the same."
     with open(fname, 'w', encoding=encoding) as file:
         for i,r in zip(ids, raw):
-            i = i.replace("\n", "").replace("\t", "").replace("->", "")
+            i = str(i).replace("\n", "").replace("\t", "").replace("->", "")
             r = r.replace("\n", "").replace("\t", "").replace("->", "")
             file.write(f'{i}->{r}\n')
             

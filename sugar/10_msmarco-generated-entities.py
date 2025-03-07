@@ -10,34 +10,34 @@ import json, re, scipy.sparse as sp, pickle, numpy as np, argparse, pandas as pd
 from tqdm.auto import tqdm
 from dataclasses import dataclass
 
-from .core import *
+from sugar.core import *
 
 # %% ../nbs/10_msmarco-generated-entities.ipynb 5
 def extract_key(entities, key='entity_canonical_category'):
-    if key == 'entity_canonical_category': 
+    if key == 'entity_canonical_category':
         return [o.lower() for o in entities if len(o.split(' | ')) == 3]
-    elif key == 'entity': 
+    elif key == 'entity':
         return [o.split(' | ')[0].lower() for o in entities if len(o.split(' | ')) == 3]
-    elif key == 'canonical': 
+    elif key == 'canonical':
         return [o.split(' | ')[1].lower() for o in entities if len(o.split(' | ')) == 3]
-    elif key == 'category': 
+    elif key == 'category':
         return [o.split(' | ')[2].lower() for o in entities if len(o.split(' | ')) == 3]
-    elif key == 'entity_canonical': 
+    elif key == 'entity_canonical':
         return [' | '.join(o.split(' | ')[0:2]).lower() for o in entities if len(o.split(' | ')) == 3]
-    else: 
+    else:
         raise ValueError(f'Invalid entity type: {key}')
-    
+
 
 # %% ../nbs/10_msmarco-generated-entities.ipynb 6
 def load_gpt_entities(fname, key='entity_canonical_category'):
     with open(fname, 'rb') as file:
         generations = pickle.load(file)
-        
+
     entities = dict()
     for k,v in tqdm(generations.items(), total=len(generations)):
         query = k.split('\t')[1].split('==::==')[0].split('|||')[1]
         entities.setdefault(query, []).extend(extract_key(v['Entities'], key))
-        
+
     return entities
 
 
@@ -51,20 +51,20 @@ def load_llama_entities(fname, key='entity_canonical_category'):
     for generation in tqdm(generations, total=len(generations)):
         entity = [entity.strip() for entity in re.findall(pattern, generation['gen'], re.DOTALL) if len(entity.strip().split(' | ')) == 3]
         entities.setdefault(int(generation['qid']), []).extend(extract_key(entity, key))
-        
+
     return entities
-    
+
 
 # %% ../nbs/10_msmarco-generated-entities.ipynb 13
 def load_entities(entity_dir, key='entity_canonical_category', model='gpt'):
     mapping = dict()
-    if model == 'gpt': 
+    if model == 'gpt':
         mapping.update(load_gpt_entities(f'{entity_dir}/trn_gpt_generations.pkl', key=key))
         mapping.update(load_gpt_entities(f'{entity_dir}/dev_gpt_generations.pkl', key=key))
-    elif model == 'llama': 
+    elif model == 'llama':
         mapping.update(load_llama_entities(f'{entity_dir}/trn_llama_generations.txt', key=key))
         mapping.update(load_llama_entities(f'{entity_dir}/dev_llama_generations.txt', key=key))
-    else: 
+    else:
         raise ValueError(f'Invalid pretrained type: {model}')
 
     return mapping
@@ -77,7 +77,7 @@ def _get_all_ids(data_dir):
     lbl_ids, lbl_txt = load_raw_file(f'{data_dir}/raw_data/label.raw.txt')
     trn_ids, tst_ids, lbl_ids = list(map(int, trn_ids)), list(map(int, tst_ids)), list(map(int, lbl_ids))
     return trn_ids, trn_txt, tst_ids, tst_txt, lbl_ids, lbl_txt
-    
+
 
 # %% ../nbs/10_msmarco-generated-entities.ipynb 16
 def get_matrix(mapping, trn_ids, trn_txt, tst_ids, tst_txt, vocab_size, model='gpt'):
@@ -91,7 +91,7 @@ def get_matrix(mapping, trn_ids, trn_txt, tst_ids, tst_txt, vocab_size, model='g
         raise ValueError(f'Invalid model type: {model}.')
 
     return trn_mat, tst_mat
-    
+
 
 # %% ../nbs/10_msmarco-generated-entities.ipynb 17
 def filter_vocab(vocab_ids, vocab_txt, trn_mat, tst_mat, lbl_mat=None):
@@ -102,13 +102,13 @@ def filter_vocab(vocab_ids, vocab_txt, trn_mat, tst_mat, lbl_mat=None):
 
     trn_mat = trn_mat[:, valid_idx].copy()
     tst_mat = tst_mat[:, valid_idx].copy()
-    if lbl_mat is not None: 
+    if lbl_mat is not None:
         lbl_mat = lbl_mat[:, valid_idx].copy()
-    
+
     vocab_ids, vocab_txt = [vocab_ids[i] for i in valid_idx], [vocab_txt[i] for i in valid_idx]
 
     return vocab_ids, vocab_txt, trn_mat, tst_mat, lbl_mat
-    
+
 
 # %% ../nbs/10_msmarco-generated-entities.ipynb 18
 def get_entities(data_dir:str, entity_dir:str, key='entity_canonical_category', model='gpt'):
@@ -124,23 +124,23 @@ def get_entities(data_dir:str, entity_dir:str, key='entity_canonical_category', 
 
     entity_ids, entity_txt, trn_mat, tst_mat, lbl_mat = filter_vocab(entity_ids, entity_txt, trn_mat, tst_mat, lbl_mat)
     return trn_mat, tst_mat, lbl_mat, entity_ids, entity_txt
-    
+
 
 # %% ../nbs/10_msmarco-generated-entities.ipynb 19
 def save_entities(save_dir, trn_mat, tst_mat, lbl_mat, entity_ids, entity_txt, key, model):
-    sp.save_npz(f'{save_dir}/{key}_trn_X_Y_{model}.npz', trn_mat)
-    sp.save_npz(f'{save_dir}/{key}_tst_X_Y_{model}.npz', tst_mat)
-    sp.save_npz(f'{save_dir}/{key}_lbl_X_Y_{model}.npz', lbl_mat)
+    sp.save_npz(f'{save_dir}/{key}_{model}_trn_X_Y.npz', trn_mat)
+    sp.save_npz(f'{save_dir}/{key}_{model}_tst_X_Y.npz', tst_mat)
+    sp.save_npz(f'{save_dir}/{key}_{model}_lbl_X_Y.npz', lbl_mat)
 
-    save_raw_txt(f'{save_dir}/raw_data/{key}.{model}.raw.txt', entity_ids, entity_txt)
-    
+    save_raw_txt(f'{save_dir}/raw_data/{key}_{model}.raw.txt', entity_ids, entity_txt)
+
 
 # %% ../nbs/10_msmarco-generated-entities.ipynb 20
-def get_and_save_entities(data_dir:str, entity_dir:str, key='entity_canonical_category', model='gpt'):    
+def get_and_save_entities(data_dir:str, entity_dir:str, key='entity_canonical_category', model='gpt'):
     trn_mat, tst_mat, lbl_mat, entity_ids, entity_txt = get_entities(data_dir, entity_dir, key, model=model)
     save_entities(data_dir, trn_mat, tst_mat, lbl_mat, entity_ids, entity_txt, key, model=model)
     return trn_mat, tst_mat, lbl_mat, entity_ids, entity_txt
-    
+
 
 # %% ../nbs/10_msmarco-generated-entities.ipynb 21
 def parse_args():
@@ -150,10 +150,10 @@ def parse_args():
     parser.add_argument('--entity_type', type=str, required=True)
     parser.add_argument('--model', type=str, required=True)
     return parser.parse_args()
-    
+
 
 # %% ../nbs/10_msmarco-generated-entities.ipynb 22
 if __name__ == '__main__':
     args = parse_args()
     get_and_save_entities(args.data_dir, args.entity_dir, key=args.entity_type, model=args.model)
-    
+
