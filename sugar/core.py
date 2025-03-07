@@ -61,9 +61,10 @@ def create_vocab_and_item2idx(mapping):
 def save_raw_txt(fname, ids, raw, encoding='utf-8'):
     assert len(ids) == len(raw), "Number of identifiers and elements in raw text should be the same."
     with open(fname, 'w', encoding=encoding) as file:
-        for i,txt in zip(ids, raw):
-            txt = txt.replace("\n", "").replace("\t", "")
-            file.write(f'{i}->{txt}\n')
+        for i,r in zip(ids, raw):
+            i = i.replace("\n", "").replace("\t", "").replace("->", "")
+            r = r.replace("\n", "").replace("\t", "").replace("->", "")
+            file.write(f'{i}->{r}\n')
             
 def save_raw_csv(fname, ids, raw, id_name="identifier", raw_name="text"):
     assert len(ids) == len(raw), "Number of identifiers and elements in raw text should be the same."

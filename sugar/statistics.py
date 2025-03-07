@@ -3,9 +3,9 @@
 # %% auto 0
 __all__ = ['METADATA_CODE', 'CODE_METADATA', 'PREFIX_METDATA', 'UpdatedDataset', 'Dataset', 'matrix_stats', 'main_dset_stats',
            'meta_dset_stats', 'dset_stats', 'trn_tst_stats', 'print_stats', 'print_dset_stats', 'TextDataset',
-           'save_labels', 'save_metadata', 'save_dataset', 'show_updated_dataset', 'show_dataset']
+           'CompareDataset', 'save_labels', 'save_metadata', 'save_dataset', 'show_updated_dataset', 'show_dataset']
 
-# %% ../nbs/12_dataset-statistics.ipynb 2
+# %% ../nbs/12_dataset-statistics.ipynb 3
 import scipy.sparse as sp, re, xclib.data.data_utils as du, numpy as np, pandas as pd, os
 from IPython.display import display
 from torch.utils.data import Dataset
@@ -14,11 +14,11 @@ from termcolor import colored, COLORS
 from .core import *
 from xcai.data import *
 
-# %% ../nbs/12_dataset-statistics.ipynb 4
+# %% ../nbs/12_dataset-statistics.ipynb 5
 METADATA_CODE = {'category': 'cat', 'see_also': 'sal', 'hyper_link': 'hlk', 'videos': 'vid', 'images': 'img', 
                  'entity': 'ent', 'canonical': 'can', 'entity_canonical_category': 'ecc', 'entity_canonical': 'enc'}
 
-# %% ../nbs/12_dataset-statistics.ipynb 5
+# %% ../nbs/12_dataset-statistics.ipynb 6
 class UpdatedDataset:
 
     @staticmethod
@@ -97,55 +97,64 @@ class UpdatedDataset:
         return trn_dset, tst_dset
         
 
-# %% ../nbs/12_dataset-statistics.ipynb 7
+# %% ../nbs/12_dataset-statistics.ipynb 8
 class Dataset:
 
     @staticmethod
-    def load_data_lbl_info(data_dir, type, encoding='utf-8'):
-        fname = f'{data_dir}/raw_data/{type}.raw'
-        ids, txt = load_raw_file(fname+'.csv', encoding=encoding) if os.path.exists(fname+'.csv') else load_raw_file(fname+'.txt', encoding=encoding)
+    def load_data_info(data_dir, type, suffix="", encoding='utf-8'):
+        if len(suffix): suffix = f".{suffix}"
+        fname = f'{data_dir}/raw_data/{type}{suffix}.raw'
+        ids, txt = load_raw_file(fname+'.csv') if os.path.exists(fname+'.csv') else load_raw_file(fname+'.txt', encoding=encoding)
         return {'identifier':ids, 'input_text':txt}
 
     @staticmethod
-    def load_metadata_info(data_dir, metadata_type, encoding='utf-8'):
-        fname = f'{data_dir}/raw_data/{metadata_type}.raw'
-        ids, txt = load_raw_file(fname+'.csv', encoding=encoding) if os.path.exists(fname+'.csv') else load_raw_file(fname+'.txt', encoding=encoding)
+    def load_lbl_info(data_dir, type, suffix="", encoding='utf-8'):
+        if len(suffix): suffix = f".{suffix}-{suffix}"
+        fname = f'{data_dir}/raw_data/{type}{suffix}.raw'
+        ids, txt = load_raw_file(fname+'.csv') if os.path.exists(fname+'.csv') else load_raw_file(fname+'.txt', encoding=encoding)
         return {'identifier':ids, 'input_text':txt}
 
     @staticmethod
-    def get_trn_tst_info(data_dir, encoding='utf-8'):
-        trn_info = Dataset.load_data_lbl_info(data_dir, 'train', encoding)
-        tst_info = Dataset.load_data_lbl_info(data_dir, 'test', encoding)
+    def load_metadata_info(data_dir, metadata_type, suffix="", encoding='utf-8'):
+        if len(suffix): suffix = f".{suffix}-{suffix}-{suffix}"
+        fname = f'{data_dir}/raw_data/{metadata_type}{suffix}.raw'
+        ids, txt = load_raw_file(fname+'.csv') if os.path.exists(fname+'.csv') else load_raw_file(fname+'.txt', encoding=encoding)
+        return {'identifier':ids, 'input_text':txt}
+
+    @staticmethod
+    def get_trn_tst_info(data_dir, suffix="", encoding='utf-8'):
+        trn_info = Dataset.load_data_info(data_dir, 'train', suffix, encoding)
+        tst_info = Dataset.load_data_info(data_dir, 'test', suffix, encoding)
         return trn_info, tst_info
 
     @staticmethod
-    def get_labels(data_dir, encoding='utf-8'):
+    def get_labels(data_dir, suffix="", encoding='utf-8'):
         trn_mat = du.read_sparse_file(f'{data_dir}/trn_X_Y.txt') if os.path.exists(f'{data_dir}/trn_X_Y.txt') else sp.load_npz(f'{data_dir}/trn_X_Y.npz')
         tst_mat = du.read_sparse_file(f'{data_dir}/tst_X_Y.txt') if os.path.exists(f'{data_dir}/tst_X_Y.txt') else sp.load_npz(f'{data_dir}/tst_X_Y.npz')
             
-        lbl_info = Dataset.load_data_lbl_info(data_dir, 'label', encoding)
+        lbl_info = Dataset.load_lbl_info(data_dir, 'label', suffix, encoding)
         
         return trn_mat, tst_mat, lbl_info
 
     @staticmethod
-    def get_metadata(data_dir, metadata_type, encoding='utf-8'):
+    def get_metadata(data_dir, metadata_type, suffix="", encoding='utf-8'):
         trn_mat = du.read_sparse_file(f'{data_dir}/{metadata_type}_trn_X_Y.txt') if os.path.exists(f'{data_dir}/{metadata_type}_trn_X_Y.txt') else sp.load_npz(f'{data_dir}/{metadata_type}_trn_X_Y.npz')
         tst_mat = du.read_sparse_file(f'{data_dir}/{metadata_type}_tst_X_Y.txt') if os.path.exists(f'{data_dir}/{metadata_type}_tst_X_Y.txt') else sp.load_npz(f'{data_dir}/{metadata_type}_tst_X_Y.npz')
         lbl_mat = du.read_sparse_file(f'{data_dir}/{metadata_type}_lbl_X_Y.txt') if os.path.exists(f'{data_dir}/{metadata_type}_lbl_X_Y.txt') else sp.load_npz(f'{data_dir}/{metadata_type}_lbl_X_Y.npz')
         
-        meta_info = Dataset.load_metadata_info(data_dir, metadata_type, encoding)
+        meta_info = Dataset.load_metadata_info(data_dir, metadata_type, suffix, encoding)
         
         return trn_mat, tst_mat, lbl_mat, meta_info
 
     @staticmethod
-    def load_datasets(data_dir, metadata_type, encoding='utf-8'):
-        trn_info, tst_info = Dataset.get_trn_tst_info(data_dir, encoding)
-        trn_mat, tst_mat, lbl_info = Dataset.get_labels(data_dir, encoding)
+    def load_datasets(data_dir, metadata_type, suffix="", encoding='utf-8'):
+        trn_info, tst_info = Dataset.get_trn_tst_info(data_dir, suffix, encoding)
+        trn_mat, tst_mat, lbl_info = Dataset.get_labels(data_dir, suffix, encoding)
     
         main_trn_dset = MainXCDataset(trn_info, trn_mat, lbl_info)
         main_tst_dset = MainXCDataset(tst_info, tst_mat, lbl_info)
     
-        trn_meta_mat, tst_meta_mat, lbl_meta_mat, meta_info = Dataset.get_metadata(data_dir, metadata_type, encoding)
+        trn_meta_mat, tst_meta_mat, lbl_meta_mat, meta_info = Dataset.get_metadata(data_dir, metadata_type, suffix, encoding)
     
         trn_meta_dset = MetaXCDataset(METADATA_CODE[metadata_type], trn_meta_mat, lbl_meta_mat, meta_info)
         tst_meta_dset = MetaXCDataset(METADATA_CODE[metadata_type], tst_meta_mat, lbl_meta_mat, meta_info)
@@ -156,11 +165,11 @@ class Dataset:
         return trn_dset, tst_dset
         
 
-# %% ../nbs/12_dataset-statistics.ipynb 9
+# %% ../nbs/12_dataset-statistics.ipynb 10
 CODE_METADATA = {'cat':'Category', 'sal':'Seealso', 'hlk':'Hyperlink', 'vid':'Videos', 'img':'Images', 
                  'ent':'Entity', 'can':'Canonical', 'ecc':'Entity Canonical Category', 'enc':'Entity Canonical'}
 
-# %% ../nbs/12_dataset-statistics.ipynb 10
+# %% ../nbs/12_dataset-statistics.ipynb 11
 def matrix_stats(mat):
     n_dat = mat.shape[0]
     n_lbl = mat.shape[1]
@@ -190,12 +199,12 @@ def matrix_stats(mat):
     return stats_dict
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 11
+# %% ../nbs/12_dataset-statistics.ipynb 12
 def main_dset_stats(dset):
     return matrix_stats(dset.data_lbl)
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 12
+# %% ../nbs/12_dataset-statistics.ipynb 13
 def meta_dset_stats(dset):
     dat_stats = matrix_stats(dset.data_meta)
     dat_stats['Dataset'] = 'Query'
@@ -206,7 +215,7 @@ def meta_dset_stats(dset):
     return [dat_stats, lbl_stats]
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 13
+# %% ../nbs/12_dataset-statistics.ipynb 14
 def dset_stats(dset):
     stats = []
     
@@ -222,7 +231,7 @@ def dset_stats(dset):
     return stats
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 14
+# %% ../nbs/12_dataset-statistics.ipynb 15
 def trn_tst_stats(trn_dset, tst_dset):
     trn_stats = dset_stats(trn_dset)
     for o in trn_stats: o['Split'] = 'Train'
@@ -234,20 +243,20 @@ def trn_tst_stats(trn_dset, tst_dset):
     return stats
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 15
+# %% ../nbs/12_dataset-statistics.ipynb 16
 def print_stats(stats):
     df = pd.DataFrame(stats).set_index(['Split', 'Dataset'])
     with pd.option_context('display.precision', 2):
         display(df)
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 16
+# %% ../nbs/12_dataset-statistics.ipynb 17
 def print_dset_stats(trn_dset, tst_dset):
     stats = trn_tst_stats(trn_dset, tst_dset)
     print_stats(stats)
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 18
+# %% ../nbs/12_dataset-statistics.ipynb 19
 class TextDataset(Dataset):
     
     def __init__(self, dset, pattern='.*_text$'):
@@ -297,10 +306,94 @@ class TextDataset(Dataset):
         
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 20
+# %% ../nbs/12_dataset-statistics.ipynb 21
+class CompareDataset:
+
+    def __init__(self, old_dset, new_dset):
+        self.old_dset, self.new_dset = old_dset, new_dset
+        colors = list(COLORS.keys())
+        self.colors = [colors[i] for i in np.random.permutation(len(colors))]
+
+    def data(self, topk=10, idx_type=''):
+        assert self.old_dset.n_data == self.new_dset.n_data, f'Different number of datapoints in the two datasets.'
+
+        old_lbl_dat = self.old_dset.data.data_lbl.getnnz(axis=1)
+        new_lbl_dat = self.new_dset.data.data_lbl.getnnz(axis=1)
+
+        if idx_type == 'max': idxs = np.argsort(new_lbl_dat - old_lbl_dat)[:-topk:-1]
+        elif idx_type == 'min': idxs = np.argsort(new_lbl_dat - old_lbl_dat)[:topk]
+        else: idxs = np.random.permutation(self.old_dset.n_data)[:topk]
+        
+        for idx in idxs:
+            old_item = self.old_dset[idx]
+            new_item = self.new_dset[idx]
+            
+            key = colored("data_input_text", self.colors[0], attrs=["reverse", "blink"])
+            value = colored(f': {old_item["data_input_text"]}', self.colors[0])
+            print(key, value)
+
+            key = colored("old lbl2data_input_text", self.colors[1], attrs=["reverse", "blink"])
+            value = colored(f': {old_item["lbl2data_input_text"]}', self.colors[1])
+            print(key, value)
+
+            key = colored("new lbl2data_input_text", self.colors[2], attrs=["reverse", "blink"])
+            value = colored(f': {new_item["lbl2data_input_text"]}', self.colors[2])
+            print(key, value)
+            
+            print()
+
+    def metadata(self, metadata_type, data_type='data', topk=10, idx_type=''):
+        assert self.old_dset.n_data == self.new_dset.n_data, f'Different number of datapoints in the two datasets.'
+
+        if data_type == 'data':
+            pattern = r"^(?!lbl).{3}2data_input_text"
+            old_lbl_dat = self.old_dset.meta[metadata_type].data_meta.getnnz(axis=1)
+            new_lbl_dat = self.new_dset.meta[metadata_type].data_meta.getnnz(axis=1)
+        elif data_type == 'lbl':
+            pattern = r"^.{3}2lbl2data_input_text"
+            old_lbl_dat = self.old_dset.meta[metadata_type].lbl_meta.getnnz(axis=1)
+            new_lbl_dat = self.new_dset.meta[metadata_type].lbl_meta.getnnz(axis=1)
+
+        if idx_type == 'max': idxs = np.argsort(new_lbl_dat - old_lbl_dat)[:-topk:-1]
+        elif idx_type == 'min': idxs = np.argsort(new_lbl_dat - old_lbl_dat)[:topk]
+        else: idxs = np.random.permutation(self.old_dset.n_data)[:topk]
+        
+        for idx in idxs:
+            old_item = self.old_dset[idx]
+            new_item = self.new_dset[idx]
+
+            key = colored("data_input_text", self.colors[0], attrs=["reverse", "blink"])
+            value = colored(f': {old_item["data_input_text"]}', self.colors[0])
+            print(key, value)
+
+            key = colored("old lbl2data_input_text", self.colors[1], attrs=["reverse", "blink"])
+            value = colored(f': {new_item["lbl2data_input_text"]}', self.colors[1])
+            print(key, value)
+
+            key = colored("new lbl2data_input_text", self.colors[2], attrs=["reverse", "blink"])
+            value = colored(f': {new_item["lbl2data_input_text"]}', self.colors[2])
+            print(key, value)
+
+            ctr = 0
+            for i,k in enumerate(old_item):
+                if re.match(pattern, k):
+                    key = colored(f"old {k}", self.colors[2*ctr+3], attrs=["reverse", "blink"])
+                    value = colored(f': {old_item[k]}', self.colors[2*ctr+3])
+                    print(key, value)
+    
+                    key = colored(f"new {k}", self.colors[2*ctr+4], attrs=["reverse", "blink"])
+                    value = colored(f': {new_item[k]}', self.colors[2*ctr+4])
+                    print(key, value)
+
+                    ctr += 1
+            
+            print()
+            
+
+# %% ../nbs/12_dataset-statistics.ipynb 23
 PREFIX_METDATA = {'cat': 'category', 'hlk': 'hyper_link', 'sal': 'see_also'}
 
-# %% ../nbs/12_dataset-statistics.ipynb 21
+# %% ../nbs/12_dataset-statistics.ipynb 24
 def save_labels(data_dir, trn_dset, tst_dset):
     os.makedirs(data_dir, exist_ok=True)
 
@@ -314,7 +407,7 @@ def save_labels(data_dir, trn_dset, tst_dset):
     save_raw_file(f'{data_dir}/raw_data/label.raw.txt', trn_dset.data.lbl_info['identifier'], trn_dset.data.lbl_info['input_text'])
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 22
+# %% ../nbs/12_dataset-statistics.ipynb 25
 def save_metadata(data_dir, trn_dset, tst_dset):
     metadata_type = None
     
@@ -328,7 +421,7 @@ def save_metadata(data_dir, trn_dset, tst_dset):
         save_raw_file(f'{data_dir}/raw_data/{metadata_type}.raw.txt', trn_dset.meta[metadata].meta_info['identifier'], trn_dset.meta[metadata].meta_info['input_text'])
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 23
+# %% ../nbs/12_dataset-statistics.ipynb 26
 def save_dataset(data_dir, trn_dset, tst_dset):
     valid_idx = np.where(trn_dset.data.data_lbl.getnnz(axis=1) > 0)[0]
     trn_dset = trn_dset._getitems(valid_idx)
@@ -342,9 +435,9 @@ def save_dataset(data_dir, trn_dset, tst_dset):
     return trn_dset, tst_dset
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 25
-def show_updated_dataset(data_dir, save_dir, metadata_type, x_prefix, y_prefix, z_prefix, idxs, use_trn=True):
-    trn_dset, tst_dset = UpdatedDataset.load_datasets(data_dir, save_dir, metadata_type, x_prefix, y_prefix, z_prefix)
+# %% ../nbs/12_dataset-statistics.ipynb 28
+def show_updated_dataset(data_dir, metadata_type, x_prefix, y_prefix, z_prefix, idxs, use_trn=True):
+    trn_dset, tst_dset = UpdatedDataset.load_datasets(data_dir, metadata_type, x_prefix, y_prefix, z_prefix)
     print_dset_stats(trn_dset, tst_dset)
     
     txt_dset = TextDataset(trn_dset if use_trn else tst_dset)
@@ -352,8 +445,8 @@ def show_updated_dataset(data_dir, save_dir, metadata_type, x_prefix, y_prefix, 
     
     return trn_dset, tst_dset
 
-def show_dataset(data_dir, metadata_type, idxs, suffix='', use_trn=True):
-    trn_dset, tst_dset = Dataset.load_datasets(data_dir, metadata_type, suffix=suffix)
+def show_dataset(data_dir, metadata_type, idxs, encoding='utf-8', use_trn=True):
+    trn_dset, tst_dset = Dataset.load_datasets(data_dir, metadata_type, encoding=encoding)
     print_dset_stats(trn_dset, tst_dset)
     
     txt_dset = TextDataset(trn_dset if use_trn else tst_dset)
