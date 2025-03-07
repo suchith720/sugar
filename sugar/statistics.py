@@ -15,7 +15,7 @@ from .core import *
 from xcai.data import *
 
 # %% ../nbs/12_dataset-statistics.ipynb 5
-METADATA_CODE = {'category': 'cat', 'see_also': 'sal', 'hyper_link': 'hlk', 'videos': 'vid', 'images': 'img', 
+METADATA_CODE = {'category': 'cat', 'see_also': 'sal', 'hyper_link': 'hlk', 'videos': 'vid', 'images': 'img', 'entity_gpt': 'ent', 'entity_llama': 'ent', 
                  'entity': 'ent', 'canonical': 'can', 'entity_canonical_category': 'ecc', 'entity_canonical': 'enc'}
 
 # %% ../nbs/12_dataset-statistics.ipynb 6
@@ -108,8 +108,10 @@ class Dataset:
         return {'identifier':ids, 'input_text':txt}
 
     @staticmethod
-    def load_lbl_info(data_dir, type, suffix="", encoding='utf-8'):
+    def load_lbl_info(data_dir, type, suffix="", encoding='utf-8', lbl_suffix=''):
         if len(suffix): suffix = f".{suffix}-{suffix}"
+        elif len(lbl_suffix): suffix = f".{lbl_suffix}"
+            
         fname = f'{data_dir}/raw_data/{type}{suffix}.raw'
         ids, txt = load_raw_file(fname+'.csv') if os.path.exists(fname+'.csv') else load_raw_file(fname+'.txt', encoding=encoding)
         return {'identifier':ids, 'input_text':txt}
@@ -128,11 +130,12 @@ class Dataset:
         return trn_info, tst_info
 
     @staticmethod
-    def get_labels(data_dir, suffix="", encoding='utf-8'):
-        trn_mat = du.read_sparse_file(f'{data_dir}/trn_X_Y.txt') if os.path.exists(f'{data_dir}/trn_X_Y.txt') else sp.load_npz(f'{data_dir}/trn_X_Y.npz')
-        tst_mat = du.read_sparse_file(f'{data_dir}/tst_X_Y.txt') if os.path.exists(f'{data_dir}/tst_X_Y.txt') else sp.load_npz(f'{data_dir}/tst_X_Y.npz')
+    def get_labels(data_dir, suffix="", encoding='utf-8', lbl_suffix=''):
+        if len(lbl_suffix): suffix = f'_{lbl_suffix}'
+        trn_mat = du.read_sparse_file(f'{data_dir}/trn_X_Y{suffix}.txt') if os.path.exists(f'{data_dir}/trn_X_Y{suffix}.txt') else sp.load_npz(f'{data_dir}/trn_X_Y{suffix}.npz')
+        tst_mat = du.read_sparse_file(f'{data_dir}/tst_X_Y{suffix}.txt') if os.path.exists(f'{data_dir}/tst_X_Y{suffix}.txt') else sp.load_npz(f'{data_dir}/tst_X_Y{suffix}.npz')
             
-        lbl_info = Dataset.load_lbl_info(data_dir, 'label', suffix, encoding)
+        lbl_info = Dataset.load_lbl_info(data_dir, 'label', suffix, encoding, lbl_suffix='')
         
         return trn_mat, tst_mat, lbl_info
 
@@ -147,9 +150,9 @@ class Dataset:
         return trn_mat, tst_mat, lbl_mat, meta_info
 
     @staticmethod
-    def load_datasets(data_dir, metadata_type, suffix="", encoding='utf-8'):
+    def load_datasets(data_dir, metadata_type, suffix="", encoding='utf-8', main_mat_suffix=''):
         trn_info, tst_info = Dataset.get_trn_tst_info(data_dir, suffix, encoding)
-        trn_mat, tst_mat, lbl_info = Dataset.get_labels(data_dir, suffix, encoding)
+        trn_mat, tst_mat, lbl_info = Dataset.get_labels(data_dir, suffix, encoding, main_mat_suffix)
     
         main_trn_dset = MainXCDataset(trn_info, trn_mat, lbl_info)
         main_tst_dset = MainXCDataset(tst_info, tst_mat, lbl_info)
