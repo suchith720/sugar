@@ -3,7 +3,8 @@
 # %% auto 0
 __all__ = ['METADATA_CODE', 'CODE_METADATA', 'PREFIX_METDATA', 'UpdatedDataset', 'Dataset', 'matrix_stats', 'main_dset_stats',
            'meta_dset_stats', 'dset_stats', 'trn_tst_stats', 'print_stats', 'print_dset_stats', 'TextDataset',
-           'CompareDataset', 'save_labels', 'save_metadata', 'save_dataset', 'show_updated_dataset', 'show_dataset']
+           'CompareDataset', 'get_filterer', 'save_labels', 'save_metadata', 'save_dataset', 'show_updated_dataset',
+           'show_dataset']
 
 # %% ../nbs/12_dataset-statistics.ipynb 3
 import scipy.sparse as sp, re, xclib.data.data_utils as du, numpy as np, pandas as pd, os
@@ -13,6 +14,7 @@ from termcolor import colored, COLORS
 
 from .core import *
 from xcai.data import *
+from xcai.core import *
 
 # %% ../nbs/12_dataset-statistics.ipynb 5
 METADATA_CODE = {'category': 'cat', 'see_also': 'sal', 'hyper_link': 'hlk', 'videos': 'vid', 'images': 'img', 'entity_gpt': 'ent', 'entity_llama': 'ent', 
@@ -399,11 +401,24 @@ class CompareDataset:
 PREFIX_METDATA = {'cat': 'category', 'hlk': 'hyper_link', 'sal': 'see_also'}
 
 # %% ../nbs/12_dataset-statistics.ipynb 24
+def get_filterer(trn_ids, tst_ids, lbl_ids, trn_mat, tst_mat):
+    trn_filterer, tst_filterer = Filterer.generate(trn_ids, tst_ids, lbl_ids, trn_mat, tst_mat)
+    tst_mat = Filterer.apply(tst_mat, tst_filterer)
+    return trn_filterer, tst_filterer, tst_mat
+    
+
+# %% ../nbs/12_dataset-statistics.ipynb 25
 def save_labels(data_dir, trn_dset, tst_dset):
     os.makedirs(data_dir, exist_ok=True)
 
+    trn_filterer, tst_filterer, tst_mat = get_filterer(trn_dset.data.data_info['identifier'], tst_dset.data.data_info['identifier'], 
+                                                       trn_dset.data.lbl_info['identifier'], trn_dset.data.data_lbl, tst_dset.data.data_lbl)
+
+    if trn_filterer is not None: np.savetxt(f'{data_dir}/filter_labels_train.txt', trn_filterer)
+    if tst_filterer is not None: np.savetxt(f'{data_dir}/filter_labels_test.txt', tst_filterer)
+
     sp.save_npz(f'{data_dir}/trn_X_Y.npz', trn_dset.data.data_lbl)
-    sp.save_npz(f'{data_dir}/tst_X_Y.npz', tst_dset.data.data_lbl)
+    sp.save_npz(f'{data_dir}/tst_X_Y.npz', tst_mat)
 
     os.makedirs(f'{data_dir}/raw_data', exist_ok=True)
 
@@ -412,7 +427,7 @@ def save_labels(data_dir, trn_dset, tst_dset):
     save_raw_file(f'{data_dir}/raw_data/label.raw.txt', trn_dset.data.lbl_info['identifier'], trn_dset.data.lbl_info['input_text'])
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 25
+# %% ../nbs/12_dataset-statistics.ipynb 26
 def save_metadata(data_dir, trn_dset, tst_dset):
     metadata_type = None
     
@@ -426,7 +441,7 @@ def save_metadata(data_dir, trn_dset, tst_dset):
         save_raw_file(f'{data_dir}/raw_data/{metadata_type}.raw.txt', trn_dset.meta[metadata].meta_info['identifier'], trn_dset.meta[metadata].meta_info['input_text'])
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 26
+# %% ../nbs/12_dataset-statistics.ipynb 27
 def save_dataset(data_dir, trn_dset, tst_dset):
     valid_idx = np.where(trn_dset.data.data_lbl.getnnz(axis=1) > 0)[0]
     trn_dset = trn_dset._getitems(valid_idx)
@@ -440,7 +455,7 @@ def save_dataset(data_dir, trn_dset, tst_dset):
     return trn_dset, tst_dset
     
 
-# %% ../nbs/12_dataset-statistics.ipynb 28
+# %% ../nbs/12_dataset-statistics.ipynb 29
 def show_updated_dataset(data_dir, metadata_type, x_prefix, y_prefix, z_prefix, idxs, use_trn=True):
     trn_dset, tst_dset = UpdatedDataset.load_datasets(data_dir, metadata_type, x_prefix, y_prefix, z_prefix)
     print_dset_stats(trn_dset, tst_dset)

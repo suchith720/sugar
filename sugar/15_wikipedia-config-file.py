@@ -19,6 +19,7 @@ def get_wikipedia_config(data_dir, metadata_type=''):
                     "data_lbl": f"{data_dir}/trn_X_Y.npz",
                     "data_info": f"{data_dir}/raw_data/train.raw.txt",
                     "lbl_info": f"{data_dir}/raw_data/label.raw.txt",
+                    "data_lbl_filterer": f"{data_dir}/filter_labels_train.txt",
                     "cat_meta": {
                         "prefix": "cat",
                         "data_meta": f"{data_dir}/category_trn_X_Y.npz",
@@ -30,8 +31,9 @@ def get_wikipedia_config(data_dir, metadata_type=''):
                     "data_lbl": f"{data_dir}/tst_X_Y.npz",
                     "data_info": f"{data_dir}/raw_data/test.raw.txt",
                     "lbl_info": f"{data_dir}/raw_data/label.raw.txt",
+                    "data_lbl_filterer": f"{data_dir}/filter_labels_test.txt",
                     "cat_meta": {
-                        "prefix": "c",
+                        "prefix": "cat",
                         "data_meta": f"{data_dir}/category_tst_X_Y.npz",
                         "lbl_meta": f"{data_dir}/category_lbl_X_Y.npz",
                         "meta_info": f"{data_dir}/raw_data/category.raw.txt"
