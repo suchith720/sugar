@@ -8,7 +8,7 @@ import json, os, argparse
 from xcai.config import PARAM
 
 # %% ../nbs/15_wikipedia-config-file.ipynb 4
-def get_wikipedia_config(data_dir, metadata_type='', x_prefix='', y_prefix='', z_prefix=''):
+def get_wikipedia_config(data_dir, metadata_type='', x_prefix='', y_prefix='', z_prefix='', raw_ext='txt'):
     if len(metadata_type): metadata_type = f'_{metadata_type}'
 
     xy_prefix = xyz_prefix = xr_prefix = yr_prefix = zr_prefix = ''
@@ -26,26 +26,26 @@ def get_wikipedia_config(data_dir, metadata_type='', x_prefix='', y_prefix='', z
             "path": {
                 "train": {
                     "data_lbl": f"{data_dir}/trn_X_Y{xy_prefix}.npz",
-                    "data_info": f"{data_dir}/raw_data/train{xr_prefix}.raw.txt",
-                    "lbl_info": f"{data_dir}/raw_data/label{yr_prefix}.raw.txt",
-                    "data_lbl_filterer": f"{data_dir}/filter_labels_train{xy_prefix}.txt",
+                    "data_info": f"{data_dir}/raw_data/train{xr_prefix}.raw.{raw_ext}",
+                    "lbl_info": f"{data_dir}/raw_data/label{yr_prefix}.raw.{raw_ext}",
+                    "data_lbl_filterer": f"{data_dir}/filter_labels_train{xy_prefix}.{raw_ext}",
                     "cat_meta": {
                         "prefix": "cat",
                         "data_meta": f"{data_dir}/category_trn_X_Y{xyz_prefix}.npz",
                         "lbl_meta": f"{data_dir}/category_lbl_X_Y{xyz_prefix}.npz",
-                        "meta_info": f"{data_dir}/raw_data/category{zr_prefix}.raw.txt"
+                        "meta_info": f"{data_dir}/raw_data/category{zr_prefix}.raw.{raw_ext}"
                     }
                 },
                 "test": {
                     "data_lbl": f"{data_dir}/tst_X_Y{xy_prefix}.npz",
-                    "data_info": f"{data_dir}/raw_data/test{xr_prefix}.raw.txt",
-                    "lbl_info": f"{data_dir}/raw_data/label{yr_prefix}.raw.txt",
-                    "data_lbl_filterer": f"{data_dir}/filter_labels_test{xy_prefix}.txt",
+                    "data_info": f"{data_dir}/raw_data/test{xr_prefix}.raw.{raw_ext}",
+                    "lbl_info": f"{data_dir}/raw_data/label{yr_prefix}.raw.{raw_ext}",
+                    "data_lbl_filterer": f"{data_dir}/filter_labels_test{xy_prefix}.{raw_ext}",
                     "cat_meta": {
                         "prefix": "cat",
                         "data_meta": f"{data_dir}/category_tst_X_Y{xyz_prefix}.npz",
                         "lbl_meta": f"{data_dir}/category_lbl_X_Y{xyz_prefix}.npz",
-                        "meta_info": f"{data_dir}/raw_data/category{zr_prefix}.raw.txt"
+                        "meta_info": f"{data_dir}/raw_data/category{zr_prefix}.raw.{raw_ext}"
                     }
                 }
             },
@@ -68,6 +68,7 @@ def parse_args():
     parser.add_argument('--x_prefix', type=str, default='')
     parser.add_argument('--y_prefix', type=str, default='')
     parser.add_argument('--z_prefix', type=str, default='')
+    parser.add_argument('--raw_ext', type=str, default='txt')
     return parser.parse_args()
     
 
@@ -75,7 +76,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     
-    config = get_wikipedia_config(args.data_dir, args.metadata_type, args.x_prefix, args.y_prefix, args.z_prefix)
+    config = get_wikipedia_config(args.data_dir, args.metadata_type, args.x_prefix, args.y_prefix, args.z_prefix, args.raw_ext)
     os.makedirs(f'{args.data_dir}/configs/', exist_ok=True)
 
     metadata_type = f'_{args.metadata_type}' if len(args.metadata_type) else ''
