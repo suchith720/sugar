@@ -20,7 +20,7 @@ def get_wikipedia_config(data_dir, metadata_type='', x_prefix='', y_prefix='', z
         yr_prefix = f'.{x_prefix}-{y_prefix}'
         zr_prefix = f'.{x_prefix}-{y_prefix}-{z_prefix}'
 
-    key = f"data{metadata_type}"
+    key = f"data{metadata_type}{xyz_prefix}"
     config = {
         key : {
             "path": {
@@ -75,10 +75,11 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     
-    config = get_wikipedia_config(args.data_dir, args.metadata_type)
+    config = get_wikipedia_config(args.data_dir, args.metadata_type, args.x_prefix, args.y_prefix, args.z_prefix)
     os.makedirs(f'{args.data_dir}/configs/', exist_ok=True)
 
     metadata_type = f'_{args.metadata_type}' if len(args.metadata_type) else ''
-    with open(f'{args.data_dir}/configs/data{metadata_type}.json', 'w') as file:
+    prefix = f'_{args.x_prefix}-{args.y_prefix}-{args.z_prefix}' if len(args.x_prefix) and len(args.y_prefix) and len(args.z_prefix) else ''
+    with open(f'{args.data_dir}/configs/data{metadata_type}{prefix}.json', 'w') as file:
         json.dump(config, file, indent=4)
         
