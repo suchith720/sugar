@@ -35,3 +35,4 @@ python sugar/10_msmarco-generated-entities.py --data_dir /home/scai/phd/aiz21832
 python sugar/11_msmarco-config-file.py --data_dir /home/scai/phd/aiz218323/scratch/datasets/msmarco/XC/ --model gpt --entity_type entity
 python sugar/11_msmarco-config-file.py --data_dir /home/scai/phd/aiz218323/scratch/datasets/msmarco/XC/ --model llama --entity_type entity
 
+python sugar/15_wikipedia-config-file.py --data_dir /home/scai/phd/aiz218323/scratch/datasets/wikipedia/20250123/LF-WikiSeeAlsoTitles-320K/ --metadata_type category --x_prefix old --y_prefix new --z_prefix combined --raw_ext csv
