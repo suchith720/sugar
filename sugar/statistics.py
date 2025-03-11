@@ -133,7 +133,7 @@ class Dataset:
 
     @staticmethod
     def get_labels(data_dir, suffix="", encoding='utf-8', lbl_suffix=''):
-        if len(lbl_suffix): s = f'_{lbl_suffix}'
+        s = f'_{lbl_suffix}' if len(lbl_suffix) else ''
         trn_mat = du.read_sparse_file(f'{data_dir}/trn_X_Y{s}.txt') if os.path.exists(f'{data_dir}/trn_X_Y{s}.txt') else sp.load_npz(f'{data_dir}/trn_X_Y{s}.npz')
         tst_mat = du.read_sparse_file(f'{data_dir}/tst_X_Y{s}.txt') if os.path.exists(f'{data_dir}/tst_X_Y{s}.txt') else sp.load_npz(f'{data_dir}/tst_X_Y{s}.npz')
             
@@ -143,7 +143,7 @@ class Dataset:
 
     @staticmethod
     def get_metadata(data_dir, metadata_type, suffix="", encoding='utf-8', lbl_suffix=''):
-        if len(lbl_suffix): s = f'_{lbl_suffix}'
+        s = f'_{lbl_suffix}' if len(lbl_suffix) else ''
         trn_mat = du.read_sparse_file(f'{data_dir}/{metadata_type}_trn_X_Y.txt') if os.path.exists(f'{data_dir}/{metadata_type}_trn_X_Y.txt') else sp.load_npz(f'{data_dir}/{metadata_type}_trn_X_Y.npz')
         tst_mat = du.read_sparse_file(f'{data_dir}/{metadata_type}_tst_X_Y.txt') if os.path.exists(f'{data_dir}/{metadata_type}_tst_X_Y.txt') else sp.load_npz(f'{data_dir}/{metadata_type}_tst_X_Y.npz')
         
@@ -411,14 +411,11 @@ def get_filterer(trn_ids, tst_ids, lbl_ids, trn_mat, tst_mat):
 def save_labels(data_dir, trn_dset, tst_dset):
     os.makedirs(data_dir, exist_ok=True)
 
-    trn_filterer, tst_filterer, tst_mat = get_filterer(trn_dset.data.data_info['identifier'], tst_dset.data.data_info['identifier'], 
-                                                       trn_dset.data.lbl_info['identifier'], trn_dset.data.data_lbl, tst_dset.data.data_lbl)
-
-    if trn_filterer is not None: np.savetxt(f'{data_dir}/filter_labels_train.txt', trn_filterer)
-    if tst_filterer is not None: np.savetxt(f'{data_dir}/filter_labels_test.txt', tst_filterer)
+    if trn_dset.data.data_lbl_filterer is not None: np.savetxt(f'{data_dir}/filter_labels_train.txt', trn_dset.data.data_lbl_filterer)
+    if tst_dset.data.data_lbl_filterer is not None: np.savetxt(f'{data_dir}/filter_labels_test.txt', tst_dset.data.data_lbl_filterer)
 
     sp.save_npz(f'{data_dir}/trn_X_Y.npz', trn_dset.data.data_lbl)
-    sp.save_npz(f'{data_dir}/tst_X_Y.npz', tst_mat)
+    sp.save_npz(f'{data_dir}/tst_X_Y.npz', tst_dset.data.data_lbl)
 
     os.makedirs(f'{data_dir}/raw_data', exist_ok=True)
 
@@ -443,12 +440,18 @@ def save_metadata(data_dir, trn_dset, tst_dset):
 
 # %% ../nbs/12_dataset-statistics.ipynb 27
 def save_dataset(data_dir, trn_dset, tst_dset):
+    trn_filterer, tst_filterer, tst_mat = get_filterer(trn_dset.data.data_info['identifier'], tst_dset.data.data_info['identifier'], 
+                                                       trn_dset.data.lbl_info['identifier'], trn_dset.data.data_lbl, tst_dset.data.data_lbl)
+    
+    trn_dset.data.data_lbl_filterer = trn_filterer
+    tst_dset.data.data_lbl_filterer = tst_filterer
+
     valid_idx = np.where(trn_dset.data.data_lbl.getnnz(axis=1) > 0)[0]
     trn_dset = trn_dset._getitems(valid_idx)
 
     valid_idx = np.where(tst_dset.data.data_lbl.getnnz(axis=1) > 0)[0]
     tst_dset = tst_dset._getitems(valid_idx)
-
+    
     save_labels(data_dir, trn_dset, tst_dset)
     save_metadata(data_dir, trn_dset, tst_dset)
 

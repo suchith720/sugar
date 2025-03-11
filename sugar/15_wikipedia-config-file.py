@@ -8,35 +8,44 @@ import json, os, argparse
 from xcai.config import PARAM
 
 # %% ../nbs/15_wikipedia-config-file.ipynb 4
-def get_wikipedia_config(data_dir, metadata_type=''):
+def get_wikipedia_config(data_dir, metadata_type='', x_prefix='', y_prefix='', z_prefix=''):
     if len(metadata_type): metadata_type = f'_{metadata_type}'
+
+    xy_prefix = xyz_prefix = xr_prefix = yr_prefix = zr_prefix = ''
+    if len(x_prefix) and len(y_prefix) and len(z_prefix):
+        xy_prefix = f'_{x_prefix}-{y_prefix}'
+        xyz_prefix = f'_{x_prefix}-{y_prefix}-{z_prefix}'
+        
+        xr_prefix = f'.{x_prefix}'
+        yr_prefix = f'.{x_prefix}-{y_prefix}'
+        zr_prefix = f'.{x_prefix}-{y_prefix}-{z_prefix}'
 
     key = f"data{metadata_type}"
     config = {
         key : {
             "path": {
                 "train": {
-                    "data_lbl": f"{data_dir}/trn_X_Y.npz",
-                    "data_info": f"{data_dir}/raw_data/train.raw.txt",
-                    "lbl_info": f"{data_dir}/raw_data/label.raw.txt",
-                    "data_lbl_filterer": f"{data_dir}/filter_labels_train.txt",
+                    "data_lbl": f"{data_dir}/trn_X_Y{xy_prefix}.npz",
+                    "data_info": f"{data_dir}/raw_data/train{xr_prefix}.raw.txt",
+                    "lbl_info": f"{data_dir}/raw_data/label{yr_prefix}.raw.txt",
+                    "data_lbl_filterer": f"{data_dir}/filter_labels_train{xy_prefix}.txt",
                     "cat_meta": {
                         "prefix": "cat",
-                        "data_meta": f"{data_dir}/category_trn_X_Y.npz",
-                        "lbl_meta": f"{data_dir}/category_lbl_X_Y.npz",
-                        "meta_info": f"{data_dir}/raw_data/category.raw.txt"
+                        "data_meta": f"{data_dir}/category_trn_X_Y{xyz_prefix}.npz",
+                        "lbl_meta": f"{data_dir}/category_lbl_X_Y{xyz_prefix}.npz",
+                        "meta_info": f"{data_dir}/raw_data/category{zr_prefix}.raw.txt"
                     }
                 },
                 "test": {
-                    "data_lbl": f"{data_dir}/tst_X_Y.npz",
-                    "data_info": f"{data_dir}/raw_data/test.raw.txt",
-                    "lbl_info": f"{data_dir}/raw_data/label.raw.txt",
-                    "data_lbl_filterer": f"{data_dir}/filter_labels_test.txt",
+                    "data_lbl": f"{data_dir}/tst_X_Y{xy_prefix}.npz",
+                    "data_info": f"{data_dir}/raw_data/test{xr_prefix}.raw.txt",
+                    "lbl_info": f"{data_dir}/raw_data/label{yr_prefix}.raw.txt",
+                    "data_lbl_filterer": f"{data_dir}/filter_labels_test{xy_prefix}.txt",
                     "cat_meta": {
                         "prefix": "cat",
-                        "data_meta": f"{data_dir}/category_tst_X_Y.npz",
-                        "lbl_meta": f"{data_dir}/category_lbl_X_Y.npz",
-                        "meta_info": f"{data_dir}/raw_data/category.raw.txt"
+                        "data_meta": f"{data_dir}/category_tst_X_Y{xyz_prefix}.npz",
+                        "lbl_meta": f"{data_dir}/category_lbl_X_Y{xyz_prefix}.npz",
+                        "meta_info": f"{data_dir}/raw_data/category{zr_prefix}.raw.txt"
                     }
                 }
             },
@@ -56,6 +65,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, required=True)
     parser.add_argument('--metadata_type', type=str, default='')
+    parser.add_argument('--x_prefix', type=str, default='')
+    parser.add_argument('--y_prefix', type=str, default='')
+    parser.add_argument('--z_prefix', type=str, default='')
     return parser.parse_args()
     
 
