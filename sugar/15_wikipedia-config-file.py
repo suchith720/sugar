@@ -74,6 +74,7 @@ def parse_args():
     parser.add_argument('--y_prefix', type=str, default='')
     parser.add_argument('--z_prefix', type=str, default='')
     parser.add_argument('--raw_ext', type=str, default='txt')
+    parser.add_argument('--linker_type', type=str, default='')
     return parser.parse_args()
     
 
@@ -81,7 +82,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     
-    config = get_wikipedia_config(args.data_dir, args.metadata_type, args.x_prefix, args.y_prefix, args.z_prefix, args.raw_ext)
+    config = get_wikipedia_config(args.data_dir, args.metadata_type, args.x_prefix, args.y_prefix, args.z_prefix, args.raw_ext, args.linker_type)
     os.makedirs(f'{args.data_dir}/configs/', exist_ok=True)
 
     metadata_type = f'_{args.metadata_type}' if len(args.metadata_type) else ''
