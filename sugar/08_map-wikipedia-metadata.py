@@ -289,7 +289,7 @@ def get_and_save_labels(page_info, redirect_info, data_dir, save_dir, key, old_p
     _save_old_lbl_raw_txt(data_dir, save_dir, redirect_info, prefix=old_prefix)
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 41
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 50
 def _load_old_labels(old_dir, new_dir, prefix=''):
     trn_mat = du.read_sparse_file(f'{old_dir}/trn_X_Y.txt')
     tst_mat = du.read_sparse_file(f'{old_dir}/tst_X_Y.txt')
@@ -303,7 +303,7 @@ def _load_old_labels(old_dir, new_dir, prefix=''):
     return trn_mat, trn_ids, tst_mat, tst_ids, lbl_ids, lbl_txt
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 42
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 51
 def _load_new_labels(data_dir, x_prefix, y_prefix):
     trn_mat = sp.load_npz(f'{data_dir}/trn_X_Y_{x_prefix}-{y_prefix}.npz')
     tst_mat = sp.load_npz(f'{data_dir}/tst_X_Y_{x_prefix}-{y_prefix}.npz')
@@ -315,7 +315,7 @@ def _load_new_labels(data_dir, x_prefix, y_prefix):
     return trn_mat, trn_ids, tst_mat, tst_ids, lbl_ids, lbl_txt
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 44
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 53
 def combined_labels(old_dir, new_dir, old_prefix='', new_prefix='', use_new_data=False):
     old_trn_mat, old_trn_ids, old_tst_mat, old_tst_ids, old_lbl_ids, old_lbl_txt = _load_old_labels(old_dir, new_dir, old_prefix)
     new_trn_mat, new_trn_ids, new_tst_mat, new_tst_ids, new_lbl_ids, new_lbl_txt = _load_new_labels(new_dir, new_prefix, new_prefix) if use_new_data else _load_new_labels(new_dir, old_prefix, new_prefix)
@@ -330,7 +330,7 @@ def combined_labels(old_dir, new_dir, old_prefix='', new_prefix='', use_new_data
                                                         new_lbl_ids, new_lbl_txt, new_trn_mat, new_tst_mat)
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 46
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 55
 def combine_and_save_labels(old_dir, new_dir, old_prefix='', new_prefix='', com_prefix=''):
     trn_ids, tst_ids, lbl_ids, lbl_txt, trn_mat, tst_mat = combined_labels(old_dir, new_dir, old_prefix=old_prefix, new_prefix=new_prefix)
     save_filterer_and_labels(new_dir, trn_mat, tst_mat, lbl_ids, lbl_txt, old_prefix, com_prefix, trn_ids=trn_ids, tst_ids=tst_ids)
@@ -339,7 +339,7 @@ def combine_and_save_labels(old_dir, new_dir, old_prefix='', new_prefix='', com_
     save_filterer_and_labels(new_dir, trn_mat, tst_mat, lbl_ids, lbl_txt, new_prefix, com_prefix, trn_ids=trn_ids, tst_ids=tst_ids)
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 49
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 58
 def get_metadata(page_info, key, trn_ids, tst_ids, lbl_ids):
     all_ids = set(trn_ids + tst_ids + lbl_ids)
 
@@ -353,7 +353,7 @@ def get_metadata(page_info, key, trn_ids, tst_ids, lbl_ids):
     return trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_txt
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 51
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 60
 def _get_ids(fname):
     ids, _ = load_raw_file(fname)
     return [o.replace('_', ' ') for o in ids]
@@ -382,7 +382,7 @@ def _get_all_ids(data_dir, new_prefix, com_prefix, old_prefix=None):
         return trn_ids, tst_ids, lbl_dict
         
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 52
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 61
 def save_metadata(save_dir, trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_txt, metadata_type, x_prefix, y_prefix, z_prefix):
     sp.save_npz(f'{save_dir}/{metadata_type}_trn_X_Y_{x_prefix}-{y_prefix}-{z_prefix}.npz', trn_mat)
     sp.save_npz(f'{save_dir}/{metadata_type}_tst_X_Y_{x_prefix}-{y_prefix}-{z_prefix}.npz', tst_mat)
@@ -393,7 +393,7 @@ def save_metadata(save_dir, trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_tx
     save_raw_file(f'{save_dir}/raw_data/{metadata_type}.{x_prefix}-{y_prefix}-{z_prefix}.raw.csv', metadata_ids, metadata_txt)
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 54
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 63
 def _get_save_metadata(save_dir, trn_ids, tst_ids, x_prefix, lbl_dict, metadata_key, z_prefix):
     for prefix, lbl_ids in lbl_dict.items():
         trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_txt = get_metadata(page_info, metadata_key, trn_ids, tst_ids, lbl_ids)
@@ -401,7 +401,7 @@ def _get_save_metadata(save_dir, trn_ids, tst_ids, x_prefix, lbl_dict, metadata_
                       z_prefix=z_prefix)
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 55
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 64
 def _save_old_metadata_raw_txt(data_dir, save_dir, redirect_info, metadata_type, prefix):
     redirect_inp2targ = get_redirect_map(redirect_info)
     
@@ -414,7 +414,7 @@ def _save_old_metadata_raw_txt(data_dir, save_dir, redirect_info, metadata_type,
     save_raw_file(f'{save_dir}/raw_data/{metadata_type}.{prefix}-{prefix}-{prefix}.raw.csv', metadata_ids, metadata_txt)
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 57
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 66
 def get_and_save_metadata(page_info, redirect_info, data_dir, save_dir, key, old_prefix, new_prefix, com_prefix):
     trn_ids, tst_ids, lbl_dict = _get_all_ids(save_dir, new_prefix, com_prefix, old_prefix)
     _get_save_metadata(save_dir, trn_ids, tst_ids, old_prefix, lbl_dict, key, new_prefix)
@@ -425,7 +425,7 @@ def get_and_save_metadata(page_info, redirect_info, data_dir, save_dir, key, old
     _save_old_metadata_raw_txt(data_dir, save_dir, redirect_info, metadata_type=key, prefix=old_prefix)
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 61
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 70
 def _load_old_metadata(old_dir, new_dir, metadata_type, prefix):
     trn_mat = du.read_sparse_file(f'{old_dir}/{metadata_type}_trn_X_Y.txt')
     tst_mat = du.read_sparse_file(f'{old_dir}/{metadata_type}_tst_X_Y.txt')
@@ -440,7 +440,7 @@ def _load_old_metadata(old_dir, new_dir, metadata_type, prefix):
     return trn_mat, tst_mat, lbl_mat, trn_ids, tst_ids, lbl_ids, metadata_ids, metadata_txt
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 62
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 71
 def _load_new_metadata(data_dir, metadata_type, x_prefix, y_prefix, z_prefix):
     trn_mat = sp.load_npz(f'{data_dir}/{metadata_type}_trn_X_Y_{x_prefix}-{y_prefix}-{z_prefix}.npz')
     tst_mat = sp.load_npz(f'{data_dir}/{metadata_type}_tst_X_Y_{x_prefix}-{y_prefix}-{z_prefix}.npz')
@@ -455,7 +455,7 @@ def _load_new_metadata(data_dir, metadata_type, x_prefix, y_prefix, z_prefix):
     return trn_mat, tst_mat, lbl_mat, trn_ids, tst_ids, lbl_ids, metadata_ids, metadata_txt
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 64
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 73
 def combined_metadata(old_dir, new_dir, metadata_type, old_prefix, new_x_prefix, new_y_prefix, new_z_prefix):
     old_trn_mat, old_tst_mat, old_lbl_mat, old_trn_ids, old_tst_ids, old_lbl_ids, old_metadata_ids, old_metadata_txt = _load_old_metadata(old_dir, new_dir, metadata_type, prefix=old_prefix)
     new_trn_mat, new_tst_mat, new_lbl_mat, new_trn_ids, new_tst_ids, new_lbl_ids, new_metadata_ids, new_metadata_txt = _load_new_metadata(new_dir, metadata_type, new_x_prefix, new_y_prefix, new_z_prefix)
@@ -469,7 +469,7 @@ def combined_metadata(old_dir, new_dir, metadata_type, old_prefix, new_x_prefix,
                              old_lbl_mat, new_lbl_mat)
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 65
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 74
 def _combine_and_save_metadata(old_dir, new_dir, metadata_type, old_prefix, new_x_prefix, new_y_prefix, new_z_prefix, com_prefix):
     for prefix in new_y_prefix:
         metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat = combined_metadata(old_dir, new_dir, metadata_type, old_prefix=old_prefix,
@@ -478,7 +478,7 @@ def _combine_and_save_metadata(old_dir, new_dir, metadata_type, old_prefix, new_
                       x_prefix=new_x_prefix, y_prefix=prefix, z_prefix=com_prefix)
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 66
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 75
 def combine_and_save_metadata(old_dir, new_dir, metadata_type, old_prefix, new_prefix, com_prefix):
     _combine_and_save_metadata(old_dir, new_dir, metadata_type, old_prefix=old_prefix, new_x_prefix=old_prefix, 
                                new_y_prefix=[old_prefix, new_prefix, com_prefix], new_z_prefix=new_prefix, com_prefix=com_prefix)
@@ -487,7 +487,7 @@ def combine_and_save_metadata(old_dir, new_dir, metadata_type, old_prefix, new_p
                                new_y_prefix=[new_prefix, com_prefix], new_z_prefix=new_prefix, com_prefix=com_prefix)
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 70
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 79
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--info_dir', type=str, required=True)
@@ -499,7 +499,7 @@ def parse_args():
     return parser.parse_args()
     
 
-# %% ../nbs/08_map-wikipedia-metadata.ipynb 71
+# %% ../nbs/08_map-wikipedia-metadata.ipynb 80
 if __name__ == '__main__':
     args = parse_args()
     page_info, redirect_info = load_info(args.info_dir)

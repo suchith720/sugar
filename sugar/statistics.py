@@ -309,19 +309,19 @@ class TextDataset(Dataset):
         elif fname.endswith('.csv'): 
             self.dump_csv(fname, idxs)
         else: 
-            raise ValueError(f'Invalid file extension: {fname}')
-        
+            raise ValueError(f'Invalid file extension: {fname}') 
     
 
 # %% ../nbs/12_dataset-statistics.ipynb 21
 class CompareDataset:
 
-    def __init__(self, old_dset, new_dset):
+    def __init__(self, old_dset, new_dset, old_name='old', new_name='new'):
         self.old_dset, self.new_dset = old_dset, new_dset
+        self.old_name, self.new_name = old_name, new_name
         colors = list(COLORS.keys())
         self.colors = [colors[i] for i in np.random.permutation(len(colors))]
 
-    def data(self, topk=10, idx_type=''):
+    def data(self, topk=10, idx_type='', fname=None):
         assert self.old_dset.n_data == self.new_dset.n_data, f'Different number of datapoints in the two datasets.'
 
         old_lbl_dat = self.old_dset.data.data_lbl.getnnz(axis=1)
@@ -330,26 +330,35 @@ class CompareDataset:
         if idx_type == 'max': idxs = np.argsort(new_lbl_dat - old_lbl_dat)[:-topk:-1]
         elif idx_type == 'min': idxs = np.argsort(new_lbl_dat - old_lbl_dat)[:topk]
         else: idxs = np.random.permutation(self.old_dset.n_data)[:topk]
-        
+
+        if fname is not None: file = open(fname, 'w')
+            
         for idx in idxs:
             old_item = self.old_dset[idx]
             new_item = self.new_dset[idx]
-            
-            key = colored("data_input_text", self.colors[0], attrs=["reverse", "blink"])
-            value = colored(f': {old_item["data_input_text"]}', self.colors[0])
-            print(key, value)
 
-            key = colored("old lbl2data_input_text", self.colors[1], attrs=["reverse", "blink"])
-            value = colored(f': {old_item["lbl2data_input_text"]}', self.colors[1])
-            print(key, value)
+            if fname is None:
+                key = colored("data_input_text", self.colors[0], attrs=["reverse", "blink"])
+                value = colored(f': {old_item["data_input_text"]}', self.colors[0])
+                print(key, value)
+    
+                key = colored(f"{self.old_name} lbl2data_input_text", self.colors[1], attrs=["reverse", "blink"])
+                value = colored(f': {old_item["lbl2data_input_text"]}', self.colors[1])
+                print(key, value)
+    
+                key = colored(f"{self.new_name} lbl2data_input_text", self.colors[2], attrs=["reverse", "blink"])
+                value = colored(f': {new_item["lbl2data_input_text"]}', self.colors[2])
+                print(key, value)
+                
+                print()
+            else:
+                file.write(f'data_input_text: {old_item["data_input_text"]}\n')
+                file.write(f'{self.old_name} lbl2data_input_text: {old_item["lbl2data_input_text"]}\n')
+                file.write(f'{self.new_name} lbl2data_input_text: {new_item["lbl2data_input_text"]}\n\n')
+                
+        if fname is not None: file.close()
 
-            key = colored("new lbl2data_input_text", self.colors[2], attrs=["reverse", "blink"])
-            value = colored(f': {new_item["lbl2data_input_text"]}', self.colors[2])
-            print(key, value)
-            
-            print()
-
-    def metadata(self, metadata_type, data_type='data', topk=10, idx_type=''):
+    def metadata(self, metadata_type, data_type='data', topk=10, idx_type='', fname=None):
         assert self.old_dset.n_data == self.new_dset.n_data, f'Different number of datapoints in the two datasets.'
 
         if data_type == 'data':
@@ -364,37 +373,54 @@ class CompareDataset:
         if idx_type == 'max': idxs = np.argsort(new_lbl_dat - old_lbl_dat)[:-topk:-1]
         elif idx_type == 'min': idxs = np.argsort(new_lbl_dat - old_lbl_dat)[:topk]
         else: idxs = np.random.permutation(self.old_dset.n_data)[:topk]
-        
+
+        if fname is not None: file = open(fname, 'w')
+            
         for idx in idxs:
             old_item = self.old_dset[idx]
             new_item = self.new_dset[idx]
 
-            key = colored("data_input_text", self.colors[0], attrs=["reverse", "blink"])
-            value = colored(f': {old_item["data_input_text"]}', self.colors[0])
-            print(key, value)
-
-            key = colored("old lbl2data_input_text", self.colors[1], attrs=["reverse", "blink"])
-            value = colored(f': {new_item["lbl2data_input_text"]}', self.colors[1])
-            print(key, value)
-
-            key = colored("new lbl2data_input_text", self.colors[2], attrs=["reverse", "blink"])
-            value = colored(f': {new_item["lbl2data_input_text"]}', self.colors[2])
-            print(key, value)
+            if fname is None:
+                key = colored("data_input_text", self.colors[0], attrs=["reverse", "blink"])
+                value = colored(f': {old_item["data_input_text"]}', self.colors[0])
+                print(key, value)
+    
+                key = colored(f"{self.old_name} lbl2data_input_text", self.colors[1], attrs=["reverse", "blink"])
+                value = colored(f': {new_item["lbl2data_input_text"]}', self.colors[1])
+                print(key, value)
+    
+                key = colored(f"{self.new_name} lbl2data_input_text", self.colors[2], attrs=["reverse", "blink"])
+                value = colored(f': {new_item["lbl2data_input_text"]}', self.colors[2])
+                print(key, value)
+            else:
+                file.write(f'data_input_text: {old_item["data_input_text"]}\n')
+                file.write(f'{self.old_name} lbl2data_input_text: {old_item["lbl2data_input_text"]}\n')
+                file.write(f'{self.new_name} lbl2data_input_text: {new_item["lbl2data_input_text"]}\n')
 
             ctr = 0
             for i,k in enumerate(old_item):
                 if re.match(pattern, k):
-                    key = colored(f"old {k}", self.colors[2*ctr+3], attrs=["reverse", "blink"])
-                    value = colored(f': {old_item[k]}', self.colors[2*ctr+3])
-                    print(key, value)
+                    if fname is None:
+                        key = colored(f"{self.old_name} {k}", self.colors[2*ctr+3], attrs=["reverse", "blink"])
+                        value = colored(f': {old_item[k]}', self.colors[2*ctr+3])
+                        print(key, value)
+        
+                        key = colored(f"{self.new_name} {k}", self.colors[2*ctr+4], attrs=["reverse", "blink"])
+                        value = colored(f': {new_item[k]}', self.colors[2*ctr+4])
+                        print(key, value)
     
-                    key = colored(f"new {k}", self.colors[2*ctr+4], attrs=["reverse", "blink"])
-                    value = colored(f': {new_item[k]}', self.colors[2*ctr+4])
-                    print(key, value)
-
-                    ctr += 1
-            
-            print()
+                        ctr += 1
+                    else:
+                        file.write(f'{self.old_name} {k}: {old_item[k]}\n')
+                        file.write(f'{self.new_name} {k}: {new_item[k]}\n')
+                        
+            if fname is None:
+                print()
+            else:
+                file.write('\n')
+                
+        if fname is not None: file.close()
+                
             
 
 # %% ../nbs/12_dataset-statistics.ipynb 23
