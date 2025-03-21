@@ -87,6 +87,7 @@ if __name__ == '__main__':
 
     metadata_type = f'_{args.metadata_type}' if len(args.metadata_type) else ''
     prefix = f'_{args.x_prefix}-{args.y_prefix}-{args.z_prefix}' if len(args.x_prefix) and len(args.y_prefix) and len(args.z_prefix) else ''
-    with open(f'{args.data_dir}/configs/data{metadata_type}{prefix}.json', 'w') as file:
+    linker_suffix = f'_{args.linker_type}-linker' if len(args.linker_type) else ''
+    with open(f'{args.data_dir}/configs/data{metadata_type}{prefix}{linker_suffix}.json', 'w') as file:
         json.dump(config, file, indent=4)
         
