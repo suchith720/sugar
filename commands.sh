@@ -38,3 +38,7 @@ python sugar/11_msmarco-config-file.py --data_dir /home/scai/phd/aiz218323/scrat
 python sugar/15_wikipedia-config-file.py --data_dir /home/scai/phd/aiz218323/scratch/datasets/wikipedia/20250123/LF-WikiSeeAlsoTitles-320K/ --metadata_type category --x_prefix old --y_prefix new --z_prefix combined --raw_ext csv
 
 python sugar/17_map-amazon-reviews-from-dump.py --cache_dir /home/scai/phd/aiz218323/scratch/datasets/amazon/dumps/raw/review_categories/ --data_dir /home/scai/phd/aiz218323/scratch/datasets/benchmarks/\(mapped\)LF-AmazonTitles-1.3M/ --key parent_asin --condition_type a23 --review_type title_text
+
+python sugar/18_map-amazon-meta-from-dump.py --cache_dir /home/scai/phd/aiz218323/scratch/datasets/amazon/dumps/raw/meta_categories/ --data_dir /home/scai/phd/aiz218323/scratch/datasets/benchmarks/\(mapped\)LF-AmazonTitles-1.3M/ --key parent_asin --condition_type a23 --metadata_type description
+
+python sugar/18_map-amazon-meta-from-dump.py --cache_dir /home/scai/phd/aiz218323/scratch/datasets/amazon/dumps/raw/meta_categories/ --data_dir /home/scai/phd/aiz218323/scratch/datasets/benchmarks/\(mapped\)LF-AmazonTitles-1.3M/ --key parent_asin --condition_type a23 --metadata_type description --no_filter

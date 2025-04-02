@@ -12,23 +12,23 @@ from tqdm.auto import tqdm
 from pathlib import Path
 from timeit import default_timer as timer
 
-from sugar.map_amazon_dump import *
+from .map_amazon_dump import *
 
 # %% ../nbs/17_map-amazon-reviews-from-dump.ipynb 7
-def title_proc(o):
+def title_proc(o): 
     return (o['title'], o['rating'])
-
-def text_proc(o):
+    
+def text_proc(o): 
     return (o['text'], o['rating'])
 
 def title_text_proc(o):
     return (o['title'] + ' ' + o['text'], o['rating'])
-
+    
 
 # %% ../nbs/17_map-amazon-reviews-from-dump.ipynb 8
 REVIEW_PROCS = {
-    'title': title_proc,
-    'text': text_proc,
+    'title': title_proc, 
+    'text': text_proc, 
     'title_text': title_text_proc,
 }
 
@@ -42,7 +42,7 @@ def extract_review_info(items, dtype, key):
     reviews = dict()
     for o in tqdm(items, total=len(items)): reviews.setdefault(o[key], []).append(func(o))
     return reviews
-
+    
 
 # %% ../nbs/17_map-amazon-reviews-from-dump.ipynb 12
 def create_vocab_and_item2idx(mapping):
@@ -53,7 +53,7 @@ def create_vocab_and_item2idx(mapping):
             l = mapping_item2idx.setdefault(k, [])
             l.append((idx,o[1]))
     return vocab, mapping_item2idx
-
+    
 
 # %% ../nbs/17_map-amazon-reviews-from-dump.ipynb 13
 def get_vocabulary(mapping):
@@ -63,7 +63,7 @@ def get_vocabulary(mapping):
     vocab_ids = list(range(len(vocab_txt)))
 
     return vocab_ids, vocab_txt, mapping_item2idx
-
+    
 
 # %% ../nbs/17_map-amazon-reviews-from-dump.ipynb 17
 def get_matrix_from_item2idx(mapping, vocab_size, ids=None):
@@ -79,7 +79,7 @@ def get_matrix_from_item2idx(mapping, vocab_size, ids=None):
     mat.sort_indices()
     mat.sum_duplicates()
     return mat, ids
-
+    
 
 # %% ../nbs/17_map-amazon-reviews-from-dump.ipynb 18
 def get_matrix(mapping_item2idx, vocab_size, trn_ids, tst_ids, lbl_ids):
@@ -87,12 +87,12 @@ def get_matrix(mapping_item2idx, vocab_size, trn_ids, tst_ids, lbl_ids):
     tst_mat, tst_ids = get_matrix_from_item2idx(mapping_item2idx, vocab_size, tst_ids)
     lbl_mat, lbl_ids = get_matrix_from_item2idx(mapping_item2idx, vocab_size, lbl_ids)
     return trn_mat, tst_mat, lbl_mat
-
+    
 
 # %% ../nbs/17_map-amazon-reviews-from-dump.ipynb 19
 def get_metadata(cache_dir, data_dir, meta_type, key, condition_type, do_filter=True):
     items = load_items(cache_dir, data_dir, key, condition_type, Path(data_dir).stem)
-
+    
     review_mapping = extract_review_info(items, meta_type, key)
 
     metadata_ids, metadata_txt, mapping_item2idx = get_vocabulary(review_mapping)
@@ -101,9 +101,9 @@ def get_metadata(cache_dir, data_dir, meta_type, key, condition_type, do_filter=
 
     if do_filter:
         metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat = filter_vocab(metadata_ids, metadata_txt, trn_mat, tst_mat, lbl_mat)
-
+        
     return trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_txt
-
+    
 
 # %% ../nbs/17_map-amazon-reviews-from-dump.ipynb 21
 def parse_args():
@@ -115,7 +115,7 @@ def parse_args():
     parser.add_argument('--review_type', type=str, required=True)
     parser.add_argument('--no_filter', action='store_false')
     return parser.parse_args()
-
+    
 
 # %% ../nbs/17_map-amazon-reviews-from-dump.ipynb 22
 if __name__ == '__main__':
@@ -123,11 +123,11 @@ if __name__ == '__main__':
 
     args = parse_args()
 
-    trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_txt = get_metadata(args.cache_dir, args.data_dir, meta_type=args.review_type,
-                                                                         key=args.key, condition_type=args.condition_type,
+    trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_txt = get_metadata(args.cache_dir, args.data_dir, meta_type=args.review_type, 
+                                                                         key=args.key, condition_type=args.condition_type, 
                                                                          do_filter=args.no_filter)
     save_metadata(args.data_dir, trn_mat, tst_mat, lbl_mat, metadata_ids, metadata_txt, f'review_{args.review_type}')
-
+    
     end_time = timer()
     print(f'Time elapsed: {end_time-start_time:.2f} seconds.')
-
+    
