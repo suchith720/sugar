@@ -24,8 +24,20 @@ def load_msmarco_hard_negatives(fname, query_ids):
     return sp.csr_matrix((data, indices, indptr))
     
 
-# %% ../nbs/20_msmarco-hard-negatives.ipynb 10
+# %% ../nbs/20_msmarco-hard-negatives.ipynb 11
 if __name__ == '__main__':
+    pkl_dir = '/scratch/scai/phd/aiz218323/datasets/processed/'
+
+    config_file = '/scratch/scai/phd/aiz218323/datasets/msmarco/XC/configs/entity_gpt_exact.json'
+    config_key = 'data_entity-gpt_exact'
+    
+    use_sxc_sampler = True
+    
+    pkl_file = f'{pkl_dir}/mogicX/msmarco_data-meta_distilbert-base-uncased_sxc.joblib'
+    
+    os.makedirs(os.path.dirname(pkl_file), exist_ok=True)
+    block = build_block(pkl_file, config_file, use_sxc_sampler, config_key, do_build=False, only_test=False)
+
     data_dir = "/home/scai/phd/aiz218323/scratch/datasets/msmarco/negatives"
     fname = f"{data_dir}/cross-encoder-ms-marco-MiniLM-L-6-v2-scores.pkl"
 
