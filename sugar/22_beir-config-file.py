@@ -13,6 +13,10 @@ def get_dataset_config(data_dir, model='', entity_type='', suffix='', add_trn_cf
     raw_suffix = f'.{suffix}' if len(suffix) else ''
 
     cfg_key = f"data_{entity_type}{model}{mat_suffix}" if len(entity_type) and len(model) and len(mat_suffix) else "data"
+    
+    entity_suffix = f'{entity_type}_' if len(entity_type) else ''
+    if len(model): entity_suffix = f'{entity_suffix}{model}_'
+    
     cfg = {
         cfg_key: {
             "path": {},
@@ -29,9 +33,9 @@ def get_dataset_config(data_dir, model='', entity_type='', suffix='', add_trn_cf
         if add_linker_cfg:
             trn_meta_cfg = {
                 "prefix": "ent",
-                "data_meta": f"{data_dir}/{entity_type}_{model}_trn_X_Y.npz",
-                "lbl_meta": f"{data_dir}/{entity_type}_{model}_lbl_X_Y{mat_suffix}.npz",
-                "meta_info": f"{data_dir}/raw_data/{entity_type}_{model}.raw.txt"
+                "data_meta": f"{data_dir}/{entity_suffix}trn_X_Y.npz",
+                "lbl_meta": f"{data_dir}/{entity_suffix}lbl_X_Y{mat_suffix}.npz",
+                "meta_info": f"{data_dir}/raw_data/{entity_suffix[:-1]}.raw.txt"
             }
             trn_cfg["ent_meta"] = trn_meta_cfg
         cfg[cfg_key]["path"]["train"] = trn_cfg
@@ -44,9 +48,9 @@ def get_dataset_config(data_dir, model='', entity_type='', suffix='', add_trn_cf
     if add_linker_cfg:
         tst_meta_cfg = {
             "prefix": "ent",
-            "data_meta": f"{data_dir}/{entity_type}_{model}_tst_X_Y.npz",
-            "lbl_meta": f"{data_dir}/{entity_type}_{model}_lbl_X_Y{mat_suffix}.npz",
-            "meta_info": f"{data_dir}/raw_data/{entity_type}_{model}.raw.txt"
+            "data_meta": f"{data_dir}/{entity_suffix}tst_X_Y.npz",
+            "lbl_meta": f"{data_dir}/{entity_suffix}lbl_X_Y{mat_suffix}.npz",
+            "meta_info": f"{data_dir}/raw_data/{entity_suffix[:-1]}.raw.txt"
         }
         tst_cfg["ent_meta"] = tst_meta_cfg
     cfg[cfg_key]["path"]["test"] = tst_cfg
@@ -74,7 +78,7 @@ if __name__ == '__main__':
                                 add_linker_cfg=args.add_linker_cfg)
     os.makedirs(f'{args.data_dir}/configs/', exist_ok=True)
 
-    suffix = f'_{args.suffix}' if args.suffix is not None and len(args.suffix) else ''
-    with open(f'{args.data_dir}/configs/{args.entity_type}_{args.model}{suffix}.json', 'w') as file:
+    fname = f"data_{args.entity_type}{args.model}{args.suffix}" if len(args.entity_type) and len(args.model) and len(args.suffix) else "data"
+    with open(f'{args.data_dir}/configs/{fname}.json', 'w') as file:
         json.dump(config, file, indent=4)
         
