@@ -159,7 +159,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     if args.download: 
-        download_msmarco(args.dataset, args.data_dir)
+        download_mteb(args.dataset, args.data_dir)
     else:
         get_and_save_dataset(f'{args.data_dir}/queries.jsonl', f'{args.data_dir}/corpus.jsonl', f'{args.data_dir}/qrels/test.tsv', 
                              save_dir=args.save_dir)
