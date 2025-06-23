@@ -12,7 +12,10 @@ def get_dataset_config(data_dir, model='', entity_type='', suffix='', add_trn_cf
     mat_suffix = f'_{suffix}' if len(suffix) else ''
     raw_suffix = f'.{suffix}' if len(suffix) else ''
 
-    cfg_key = f"data_{entity_type}{model}{mat_suffix}" if len(entity_type) and len(model) and len(mat_suffix) else "data"
+    cfg_key = f"data_{entity_type}" if len(entity_type) else ""
+    if len(model): cfg_key = f"{cfg_key}-{model}"
+    if len(mat_suffix): cfg_key = f"{cfg_key}{mat_suffix}"
+    if not len(cfg_key): cfg_key = "data"
     
     entity_suffix = f'{entity_type}_' if len(entity_type) else ''
     if len(model): entity_suffix = f'{entity_suffix}{model}_'
@@ -62,8 +65,8 @@ def get_dataset_config(data_dir, model='', entity_type='', suffix='', add_trn_cf
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, required=True)
-    parser.add_argument('--model', type=str, required=None)
-    parser.add_argument('--entity_type', type=str, required=None)
+    parser.add_argument('--model', type=str, default='')
+    parser.add_argument('--entity_type', type=str, default='')
     parser.add_argument('--suffix', type=str, default='')
     parser.add_argument('--add_trn_cfg', type=bool, default=True)
     parser.add_argument('--add_linker_cfg', type=bool, default=True)
