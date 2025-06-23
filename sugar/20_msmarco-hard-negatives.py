@@ -7,6 +7,7 @@ __all__ = ['load_msmarco_hard_negatives']
 import pickle, scipy.sparse as sp
 from tqdm.auto import tqdm
 
+from xcai.main import *
 from .core import *
 
 # %% ../nbs/20_msmarco-hard-negatives.ipynb 4
@@ -53,6 +54,10 @@ if __name__ == '__main__':
     
     neg_ids = lbl_ids + meta_ids
     neg = sp.hstack([n1, n2])
+    
+    neg.data[:] = np.exp(neg.data)
+    neg = neg / (neg.sum(axis=1) + 1e-9)
+    neg = neg.tocsr()
     
     sp.save_npz(f'{data_dir}/negatives_trn_X_Y.npz', neg)
     sp.save_npz(f'{data_dir}/negatives_lbl_X_Y.npz', sp.csr_matrix((523598, 8841823), dtype=np.float64))
