@@ -26,12 +26,13 @@ def get_dataset_config(data_dir, model='', entity_type='', suffix='', add_trn_cf
             "parameters": PARAM,
         }
     }
-
+    cfg[cfg_key]["parameters"]["main_max_lbl_sequence_length"] = 128
+    
     if add_trn_cfg:
         trn_cfg = {
             "data_lbl": f"{data_dir}/trn_X_Y{mat_suffix}.npz",
-            "data_info": f"{data_dir}/raw_data/train.raw.txt",
-            "lbl_info": f"{data_dir}/raw_data/label{raw_suffix}.raw.txt",
+            "data_info": f"{data_dir}/raw_data/train.raw.csv",
+            "lbl_info": f"{data_dir}/raw_data/label{raw_suffix}.raw.csv",
         }
         if add_linker_cfg:
             trn_meta_cfg = {
@@ -45,8 +46,8 @@ def get_dataset_config(data_dir, model='', entity_type='', suffix='', add_trn_cf
 
     tst_cfg = {
         "data_lbl": f"{data_dir}/tst_X_Y{mat_suffix}.npz",
-        "data_info": f"{data_dir}/raw_data/test.raw.txt",
-        "lbl_info": f"{data_dir}/raw_data/label{raw_suffix}.raw.txt",
+        "data_info": f"{data_dir}/raw_data/test.raw.csv",
+        "lbl_info": f"{data_dir}/raw_data/label{raw_suffix}.raw.csv",
     }
     if add_linker_cfg:
         tst_meta_cfg = {
@@ -81,7 +82,11 @@ if __name__ == '__main__':
                                 add_linker_cfg=args.add_linker_cfg)
     os.makedirs(f'{args.data_dir}/configs/', exist_ok=True)
 
-    fname = f"data_{args.entity_type}{args.model}{args.suffix}" if len(args.entity_type) and len(args.model) and len(args.suffix) else "data"
+    fname = f"data_{args.entity_type}" if len(args.entity_type) else ""
+    if len(args.model): fname = f"{fname}_{args.model}"
+    if len(args.suffix): fname = f"{fname}_{args.suffix}"
+    if not len(fname): fname = "data"
+    
     with open(f'{args.data_dir}/configs/{fname}.json', 'w') as file:
         json.dump(config, file, indent=4)
         

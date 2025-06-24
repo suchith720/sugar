@@ -44,12 +44,12 @@ def load_labels(fname):
 # %% ../nbs/21_beir-dataset.ipynb 10
 def load_qrels(fname, lbl_id2idx=None):
     qrels = pd.read_table(fname)
-    assert (qrels['score'] == 1).all(), 'Score should contain all 1s'
+    # assert (qrels['score'] == 1).all(), 'Score should contain all 1s'
 
     query_to_labels = dict()
-    for qid, lid in tqdm(zip(qrels['query-id'], qrels['corpus-id']), total=qrels.shape[0]):
-        query_to_labels.setdefault(qid, []).append(lid if lbl_id2idx is None else lbl_id2idx[lid])
-
+    for qid, lid, sc in tqdm(zip(qrels['query-id'], qrels['corpus-id'], qrels['score']), total=qrels.shape[0]):
+        if sc > 0 and str(lid) in lbl_id2idx: query_to_labels.setdefault(qid, []).append(str(lid) if lbl_id2idx is None else lbl_id2idx[str(lid)])
+    
     return query_to_labels
     
 
