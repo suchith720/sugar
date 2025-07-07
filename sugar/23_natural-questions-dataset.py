@@ -17,12 +17,12 @@ from .core import *
 # %% ../nbs/23_natural-questions-dataset.ipynb 7
 def load_kaggle_data(fname, key='positive_ctxs'):
     with open(fname) as file:
-        data = json.load(file)
+        content = json.load(file)
 
     queries, labels, lbl_id2idx = [], [], {}
     data, indices, indptr = [], [], [0]
-    for o in tqdm(train_data):
-        query = o['question']
+    for o in tqdm(content):
+        queries.append(o['question'])
         if key in o:
             for lbl in o[key]:
                 lbl_id = lbl['id'] if 'id' in lbl else lbl['passage_id']
@@ -76,7 +76,7 @@ def get_kaggle_dataset(fname, key='positive_ctxs'):
     return qry_info, lbl_info
     
 
-# %% ../nbs/23_natural-questions-dataset.ipynb 17
+# %% ../nbs/23_natural-questions-dataset.ipynb 18
 def save_dataset(save_dir, lbl_info, tst_info=None, trn_info=None, suffix=''):
     os.makedirs(save_dir, exist_ok=True)
     x_suffix = f'_{suffix}' if len(suffix) else ''
@@ -91,25 +91,25 @@ def save_dataset(save_dir, lbl_info, tst_info=None, trn_info=None, suffix=''):
     save_raw_file(f'{save_dir}/raw_data/label{y_suffix}.raw.csv', lbl_info.ids, lbl_info.txt)
     
 
-# %% ../nbs/23_natural-questions-dataset.ipynb 18
+# %% ../nbs/23_natural-questions-dataset.ipynb 19
 def get_and_save_kaggle_dataset(fname:str, key='positive_ctxs', save_dir:str=None, suffix=''):
     qry_info, lbl_info = get_kaggle_dataset(fname, key=key)
     if save_dir is not None: save_dataset(save_dir, lbl_info, trn_info=qry_info, suffix=suffix)
     return qry_info, lbl_info
     
 
-# %% ../nbs/23_natural-questions-dataset.ipynb 19
+# %% ../nbs/23_natural-questions-dataset.ipynb 20
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--fname', type=str, required=True)
     parser.add_argument('--key', type=str, default='positive_ctxs')
     parser.add_argument('--save_dir', type=str, default=None)
-    parser.add_argument('--save_dir', type=str, default='')
+    parser.add_argument('--suffix', type=str, default='')
     
     return parser.parse_args()
     
 
-# %% ../nbs/23_natural-questions-dataset.ipynb 20
+# %% ../nbs/23_natural-questions-dataset.ipynb 21
 if __name__ == '__main__':
     args = parse_args()
     get_and_save_kaggle_dataset(args.fname, key=args.key, save_dir=args.save_dir, suffix=args.suffix)

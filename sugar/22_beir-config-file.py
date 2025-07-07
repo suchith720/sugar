@@ -12,10 +12,9 @@ def get_dataset_config(data_dir, model='', entity_type='', suffix='', add_trn_cf
     mat_suffix = f'_{suffix}' if len(suffix) else ''
     raw_suffix = f'.{suffix}' if len(suffix) else ''
 
-    cfg_key = f"data_{entity_type}" if len(entity_type) else ""
+    cfg_key = f"data_{entity_type}" if len(entity_type) else "data"
     if len(model): cfg_key = f"{cfg_key}-{model}"
     if len(mat_suffix): cfg_key = f"{cfg_key}{mat_suffix}"
-    if not len(cfg_key): cfg_key = "data"
     
     entity_suffix = f'{entity_type}_' if len(entity_type) else ''
     if len(model): entity_suffix = f'{entity_suffix}{model}_'
@@ -69,8 +68,8 @@ def parse_args():
     parser.add_argument('--model', type=str, default='')
     parser.add_argument('--entity_type', type=str, default='')
     parser.add_argument('--suffix', type=str, default='')
-    parser.add_argument('--add_trn_cfg', type=bool, default=True)
-    parser.add_argument('--add_linker_cfg', type=bool, default=True)
+    parser.add_argument('--add_trn_cfg', type=int, default=1)
+    parser.add_argument('--add_linker_cfg', type=int, default=1)
     return parser.parse_args()
     
 
@@ -82,10 +81,9 @@ if __name__ == '__main__':
                                 add_linker_cfg=args.add_linker_cfg)
     os.makedirs(f'{args.data_dir}/configs/', exist_ok=True)
 
-    fname = f"data_{args.entity_type}" if len(args.entity_type) else ""
+    fname = f"data_{args.entity_type}" if len(args.entity_type) else "data"
     if len(args.model): fname = f"{fname}_{args.model}"
     if len(args.suffix): fname = f"{fname}_{args.suffix}"
-    if not len(fname): fname = "data"
     
     with open(f'{args.data_dir}/configs/{fname}.json', 'w') as file:
         json.dump(config, file, indent=4)
