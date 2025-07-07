@@ -35,8 +35,8 @@ def load_msmarco_hard_negatives(fname:str, data_ids:Optional[List]=None):
 # %% ../nbs/20_msmarco-hard-negatives.ipynb 19
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pkl_dir', action='store_true')
-    parser.add_argument('--data_dir', action='store_true')
+    parser.add_argument('--pkl_dir', type=str, required=True)
+    parser.add_argument('--data_dir', type=str, required=True)
     return parser.parse_args()
     
 
