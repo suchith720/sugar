@@ -9,7 +9,7 @@ from tqdm.auto import tqdm
 from typing import Optional, List
 
 from xcai.main import *
-from sugar.core import *
+from .core import *
 
 # %% ../nbs/20_msmarco-hard-negatives.ipynb 4
 def load_msmarco_hard_negatives(fname:str, data_ids:Optional[List]=None):
@@ -30,7 +30,7 @@ def load_msmarco_hard_negatives(fname:str, data_ids:Optional[List]=None):
 
     lbl_ids = sorted(lbl_id2idx, key=lambda x: lbl_id2idx[x])
     return data_ids, lbl_ids, sp.csr_matrix((data, indices, indptr), dtype=np.float32)
-
+    
 
 # %% ../nbs/20_msmarco-hard-negatives.ipynb 19
 def parse_args():
@@ -38,15 +38,15 @@ def parse_args():
     parser.add_argument('--pkl_dir', type=str, required=True)
     parser.add_argument('--data_dir', type=str, required=True)
     return parser.parse_args()
-
+    
 
 # %% ../nbs/20_msmarco-hard-negatives.ipynb 20
 if __name__ == '__main__':
     args = parse_args()
-
+    
     config_file = f'{args.data_dir}/XC/configs/entity_gpt_exact.json'
     config_key = 'data_entity-gpt_exact'
-
+    
     use_sxc_sampler = True
     pkl_file = f'{args.pkl_dir}/mogicX/msmarco_data-meta_distilbert-base-uncased_sxc.joblib'
     os.makedirs(os.path.dirname(pkl_file), exist_ok=True)
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     trn_ids = [int(i) for i in block.train.dset.data.data_info['identifier']]
     data_ids, neg_ids, data_neg = load_msmarco_hard_negatives(neg_file, trn_ids)
     lbl_neg = sp.csr_matrix((block.n_lbl, data_neg.shape[1]), dtype=np.float32)
-
+    
     sp.save_npz(f'{args.data_dir}/XC/negatives_trn_X_Y.npz', data_neg)
     sp.save_npz(f'{args.data_dir}/XC/negatives_lbl_X_Y_exact.npz', lbl_neg)
 
@@ -67,4 +67,4 @@ if __name__ == '__main__':
 
     neg_txt = [lbl_map[str(i)] for i in neg_ids]
     save_raw_file(f'{args.data_dir}/XC/raw_data/negatives.raw.txt', neg_ids, neg_txt)
-
+    
