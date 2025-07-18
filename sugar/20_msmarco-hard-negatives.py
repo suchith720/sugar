@@ -62,36 +62,40 @@ if __name__ == '__main__':
     sp.save_npz(f'{args.data_dir}/XC/ce-scores_trn_X_Y.npz', data_ce)
     sp.save_npz(f'{args.data_dir}/XC/ce-scores_lbl_X_Y_exact.npz', lbl_ce)
 
-    lbl_file = f'{args.data_dir}/XC/raw_data/label.raw.txt'
-    lbl_ids, lbl_txt = load_raw_file(lbl_file)
-    lbl_map = {k:v for k,v in zip(lbl_ids, lbl_txt)}
+    all_lbl_ids, all_lbl_txt = load_raw_file(f'{args.data_dir}/XC/raw_data/label.raw.txt')
+    all_lbl_map = {k:v for k,v in zip(all_lbl_ids, all_lbl_txt)}
 
-    ce_txt = [lbl_map[str(i)] for i in ce_ids]
+    ce_txt = [all_lbl_map[str(i)] for i in ce_ids]
     save_raw_file(f'{args.data_dir}/XC/raw_data/ce-scores.raw.txt', ce_ids, ce_txt)
 
     # save ce scores for positives
-    ce_id2idx = {str(id): idx for idx,id in enumerate(ce_ids)}
-
     data_lbl = block.train.dset.data.data_lbl.copy().astype(np.float32)
     data_lbl.sort_indices()
     lbl_ids = block.train.dset.data.lbl_info['identifier']
 
-    def align_with_ce_scores():
-        indices = [ce_id2idx[lbl_ids[i]] for i in data_lbl.indices]
-        indptr = data_lbl.indptr
-        data = np.ones(len(indices))
-        return sp.csr_matrix((data, indices, indptr), dtype=np.float32, shape=data_ce.shape)
-    data_lbl_align = align_with_ce_scores()
-    data_lbl_align.sort_indices()
+    def align_with_matrix_labels(inp_data_lbl, inp_lbl_ids, targ_lbl_id2idx, targ_shape, use_data=False):
+        indices = [targ_lbl_id2idx[inp_lbl_ids[i]] for i in inp_data_lbl.indices]
+        indptr = inp_data_lbl.indptr
+        data = inp_data_lbl.data if use_data else np.ones(len(indices))
+        return sp.csr_matrix((data, indices, indptr), dtype=np.float32, shape=targ_shape)
 
-    data_lbl.data[:] = data_lbl_align.data
+    ce_id2idx = {str(id): idx for idx,id in enumerate(ce_ids)}
+    data_lbl_ce_align = align_with_matrix_labels(data_lbl, lbl_ids, ce_id2idx, data_ce.shape)
+    data_lbl_ce_align.sort_indices()
+
+    data_lbl_ce_align = data_lbl_ce_align.multiply(data_ce)
+
+    lbl_id2idx = {str(id): idx for idx,id in enumerate(lbl_ids)}
+    data_lbl = align_with_matrix_labels(data_lbl_ce_align, ce_ids, ce_id2idx, data_lbl.shape, use_data=True)
+    data_lbl.sort_indices()
+    
     sp.save_npz(f'{args.data_dir}/XC/trn_X_Y_ce-exact.npz', data_lbl)
 
     # save ce scores for negatives
-    x_idx, y_idx = data_lbl_align.nonzero()
+    x_idx, y_idx = data_lbl_ce_align.nonzero()
     data_ce[x_idx, y_idx] = 0
     data_ce.eliminate_zeros()
 
-    sp.save_npz(f'{data_dir}/XC/ce-negatives_trn_X_Y.npz', data_ce)
-    sp.save_npz(f'{data_dir}/XC/ce-negatives_lbl_X_Y_exact.npz', lbl_ce)
+    sp.save_npz(f'{args.data_dir}/XC/ce-negatives_trn_X_Y.npz', data_ce)
+    sp.save_npz(f'{args.data_dir}/XC/ce-negatives_lbl_X_Y_exact.npz', lbl_ce)
     
