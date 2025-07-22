@@ -42,3 +42,6 @@ python sugar/17_map-amazon-reviews-from-dump.py --cache_dir /home/scai/phd/aiz21
 python sugar/18_map-amazon-meta-from-dump.py --cache_dir /home/scai/phd/aiz218323/scratch/datasets/amazon/dumps/raw/meta_categories/ --data_dir /home/scai/phd/aiz218323/scratch/datasets/benchmarks/\(mapped\)LF-AmazonTitles-1.3M/ --key parent_asin --condition_type a23 --metadata_type description
 
 python sugar/18_map-amazon-meta-from-dump.py --cache_dir /home/scai/phd/aiz218323/scratch/datasets/amazon/dumps/raw/meta_categories/ --data_dir /home/scai/phd/aiz218323/scratch/datasets/benchmarks/\(mapped\)LF-AmazonTitles-1.3M/ --key parent_asin --condition_type a23 --metadata_type description --no_filter
+
+# hard negatives for msmarco dataset.
+python sugar/20_msmarco-hard-negatives.py --pkl_dir /home/aiscuser/scratch1/datasets/processed --data_dir /data/datasets/msmarco/
