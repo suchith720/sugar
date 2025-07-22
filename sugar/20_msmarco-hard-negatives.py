@@ -11,7 +11,7 @@ from typing import Optional, List
 from xcai.main import *
 from .core import *
 
-# %% ../nbs/20_msmarco-hard-negatives.ipynb 4
+# %% ../nbs/20_msmarco-hard-negatives.ipynb 6
 def load_msmarco_ce_scores(fname:str, data_ids:Optional[List]=None):
     with open(fname, 'rb') as file:
         negatives = pickle.load(file)
@@ -32,7 +32,7 @@ def load_msmarco_ce_scores(fname:str, data_ids:Optional[List]=None):
     return data_ids, lbl_ids, sp.csr_matrix((data, indices, indptr), dtype=np.float32)
     
 
-# %% ../nbs/20_msmarco-hard-negatives.ipynb 26
+# %% ../nbs/20_msmarco-hard-negatives.ipynb 28
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pkl_dir', type=str, required=True)
@@ -40,7 +40,7 @@ def parse_args():
     return parser.parse_args()
     
 
-# %% ../nbs/20_msmarco-hard-negatives.ipynb 27
+# %% ../nbs/20_msmarco-hard-negatives.ipynb 29
 if __name__ == '__main__':
     args = parse_args()
     
@@ -84,9 +84,10 @@ if __name__ == '__main__':
     data_lbl_ce_align.sort_indices()
 
     data_lbl_ce_align = data_lbl_ce_align.multiply(data_ce)
+    data_lbl_ce_align.eliminate_zeros()
 
     lbl_id2idx = {str(id): idx for idx,id in enumerate(lbl_ids)}
-    data_lbl = align_with_matrix_labels(data_lbl_ce_align, ce_ids, ce_id2idx, data_lbl.shape, use_data=True)
+    data_lbl = align_with_matrix_labels(data_lbl_ce_align, ce_ids, lbl_id2idx, data_lbl.shape, use_data=True)
     data_lbl.sort_indices()
     
     sp.save_npz(f'{args.data_dir}/XC/trn_X_Y_ce-exact.npz', data_lbl)
