@@ -11,7 +11,7 @@ from typing import Optional, List
 from xcai.main import *
 from .core import *
 
-# %% ../nbs/20_msmarco-hard-negatives.ipynb 6
+# %% ../nbs/20_msmarco-hard-negatives.ipynb 4
 def load_msmarco_ce_scores(fname:str, data_ids:Optional[List]=None):
     with open(fname, 'rb') as file:
         negatives = pickle.load(file)
@@ -32,7 +32,7 @@ def load_msmarco_ce_scores(fname:str, data_ids:Optional[List]=None):
     return data_ids, lbl_ids, sp.csr_matrix((data, indices, indptr), dtype=np.float32)
     
 
-# %% ../nbs/20_msmarco-hard-negatives.ipynb 28
+# %% ../nbs/20_msmarco-hard-negatives.ipynb 26
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pkl_dir', type=str, required=True)
@@ -40,19 +40,19 @@ def parse_args():
     return parser.parse_args()
     
 
-# %% ../nbs/20_msmarco-hard-negatives.ipynb 29
+# %% ../nbs/20_msmarco-hard-negatives.ipynb 27
 if __name__ == '__main__':
     args = parse_args()
     
     config_file = f'{args.data_dir}/XC/configs/data_exact.json'
-    config_key = 'data'
+    config_key = 'data_exact'
     
     use_sxc_sampler = True
     pkl_file = f'{args.pkl_dir}/mogicX/msmarco_data_distilbert-base-uncased_sxc_exact.joblib'
     os.makedirs(os.path.dirname(pkl_file), exist_ok=True)
     block = build_block(pkl_file, config_file, use_sxc_sampler, config_key, do_build=False, only_test=False)
 
-    ce_file = f"{args.data_dir}/negatives/cross-encoder-ms-marco-MiniLM-L-6-v2-scores.pkl"
+    ce_file = f"{args.data_dir}/ce_scores/cross-encoder-ms-marco-MiniLM-L-6-v2-scores.pkl"
 
     # save ce score information
     trn_ids = [int(i) for i in block.train.dset.data.data_info['identifier']]
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     lbl_ids = block.train.dset.data.lbl_info['identifier']
 
     def align_with_matrix_labels(inp_data_lbl, inp_lbl_ids, targ_lbl_id2idx, targ_shape, use_data=False):
-        indices = [targ_lbl_id2idx[inp_lbl_ids[i]] for i in inp_data_lbl.indices]
+        indices = [targ_lbl_id2idx[str(inp_lbl_ids[i])] for i in inp_data_lbl.indices]
         indptr = inp_data_lbl.indptr
         data = inp_data_lbl.data if use_data else np.ones(len(indices))
         return sp.csr_matrix((data, indices, indptr), dtype=np.float32, shape=targ_shape)
