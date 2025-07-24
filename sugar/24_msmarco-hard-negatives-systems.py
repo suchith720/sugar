@@ -59,14 +59,6 @@ def parse_args():
 if __name__ == '__main__':
     input_args = parse_args()
     
-    data_meta_file = "/data/datasets/msmarco/XC//ce-negatives_trn_X_Y.npz"
-    data_info_file = "/data/datasets/msmarco/XC//raw_data/train.raw.txt"
-    meta_info_file =  "/data/datasets/msmarco/XC//raw_data/ce-scores.raw.txt"
-
-    neg_file = "/data/datasets/msmarco/ce_scores/msmarco-hard-negatives.jsonl"
-
-    topk = 5
-
     data_meta = sp.load_npz(input_args.data_meta)
     data_info, _ = load_raw_file(input_args.data_info)
     meta_info, _ = load_raw_file(input_args.meta_info)
