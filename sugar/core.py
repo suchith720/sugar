@@ -59,23 +59,24 @@ def create_vocab_and_item2idx(mapping):
     
 
 # %% ../nbs/00_core.ipynb 10
-def save_raw_txt(fname, ids, raw, encoding='utf-8'):
+def save_raw_txt(fname, ids, raw, sep:Optional[str]='->', encoding:Optional[str]='utf-8'):
     assert len(ids) == len(raw), "Number of identifiers and elements in raw text should be the same."
     with open(fname, 'w', encoding=encoding) as file:
         for i,r in zip(ids, raw):
             i = str(i).replace("\n", "").replace("\t", "").replace("->", "")
             r = r.replace("\n", "").replace("\t", "").replace("->", "")
-            file.write(f'{i}->{r}\n')
+            file.write(f'{i}{sep}{r}\n')
             
-def save_raw_csv(fname, ids, raw, id_name="identifier", raw_name="text"):
+def save_raw_csv(fname, ids, raw, id_name:Optional[str]="identifier", raw_name:Optional[str]="text"):
     assert len(ids) == len(raw), "Number of identifiers and elements in raw text should be the same."
     raw = [o.replace("\n", " ").replace("\r", " ") for o in raw]
     df = pd.DataFrame({id_name: ids, raw_name: raw})
     df.to_csv(fname, index=False)
 
-def save_raw_file(fname, ids, raw, id_name="identifier", raw_name="text", encoding='utf-8'):
+def save_raw_file(fname, ids, raw, id_name:Optional[str]="identifier", raw_name:Optional[str]="text", 
+                  sep:Optional[str]='->', encoding:Optional[str]='utf-8'):
     if fname.endswith(".txt"): 
-        save_raw_txt(fname, ids, raw, encoding=encoding)
+        save_raw_txt(fname, ids, raw, sep=sep, encoding=encoding)
     elif fname.endswith(".csv"): 
         save_raw_csv(fname, ids, raw, id_name=id_name, raw_name=raw_name)
     else: 
