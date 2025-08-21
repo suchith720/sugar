@@ -7,14 +7,14 @@ __all__ = ['load_raw_txt', 'load_raw_csv', 'load_raw_file', 'get_all_ids', 'filt
 # %% ../nbs/00_core.ipynb 2
 import scipy.sparse as sp, numpy as np, pandas as pd
 from tqdm.auto import tqdm
-from typing import Dict
+from typing import Dict, Optional
 
 # %% ../nbs/00_core.ipynb 4
-def load_raw_txt(fname:str, encoding:str='utf-8'):
+def load_raw_txt(fname:str, encoding:str='utf-8', sep:Optional[str]='->'):
     ids, raw = [], []
     with open(fname, 'r', encoding=encoding) as file:
         for line in file:
-            k, v = line[:-1].split('->', maxsplit=1)
+            k, v = line[:-1].split(sep, maxsplit=1)
             ids.append(k); raw.append(v)
     return ids, raw
 
@@ -24,9 +24,10 @@ def load_raw_csv(fname:str, id_name:str="identifier", raw_name:str="text"):
     ids, raw = df[id_name].tolist(), df[raw_name].tolist()
     return ids, raw
 
-def load_raw_file(fname:str, id_name:str="identifier", raw_name:str="text", encoding:str='utf-8'):
+def load_raw_file(fname:str, id_name:Optional[str]="identifier", raw_name:Optional[str]="text", 
+                  sep:Optional[str]='->', encoding:Optional[str]='utf-8'):
     if fname.endswith(".txt"): 
-        return load_raw_txt(fname, encoding=encoding)
+        return load_raw_txt(fname, encoding=encoding, sep=sep)
     elif fname.endswith(".csv"): 
         return load_raw_csv(fname, id_name=id_name, raw_name=raw_name)
     else: 
