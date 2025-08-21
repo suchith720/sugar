@@ -2,12 +2,13 @@
 
 # %% auto 0
 __all__ = ['load_raw_txt', 'load_raw_csv', 'load_raw_file', 'get_all_ids', 'filter_mapping', 'create_vocab_and_item2idx',
-           'save_raw_txt', 'save_raw_csv', 'save_raw_file', 'get_matrix_from_item2idx', 'get_matrix_from_mapping']
+           'save_raw_txt', 'save_raw_csv', 'save_raw_file', 'save_llm_input', 'get_matrix_from_item2idx',
+           'get_matrix_from_mapping']
 
 # %% ../nbs/00_core.ipynb 2
 import scipy.sparse as sp, numpy as np, pandas as pd
 from tqdm.auto import tqdm
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 # %% ../nbs/00_core.ipynb 4
 def load_raw_txt(fname:str, encoding:str='utf-8', sep:Optional[str]='->'):
@@ -83,7 +84,20 @@ def save_raw_file(fname, ids, raw, id_name:Optional[str]="identifier", raw_name:
         raise ValueError(f"Invalid filename: {fname}.")
             
 
-# %% ../nbs/00_core.ipynb 12
+# %% ../nbs/00_core.ipynb 11
+def save_llm_input(fname:str, items:List, sep:Optional[str]='->', encoding:Optional[str]='utf-8'):
+    for o in items: assert len(items[0]) == len(o), "Number of entities in all the items should be equal."
+    with open(fname, 'w', encoding=encoding) as file:
+        for item in zip(*items):
+            line = ""
+            for i,o in enumerate(item):
+                o = str(o).replace("\n", "").replace("\t", "").replace("->", "")
+                if i == 0: line = o
+                else: line += o
+            file.write(line + '\n')
+            
+
+# %% ../nbs/00_core.ipynb 13
 def get_matrix_from_item2idx(mapping, vocab_size, ids=None):
     data, indices, indptr = [], [], [0]
     ids = list(mapping) if ids is None else ids
@@ -96,7 +110,7 @@ def get_matrix_from_item2idx(mapping, vocab_size, ids=None):
     return sp.csr_matrix((data, indices, indptr), shape=(len(ids), vocab_size), dtype=np.int64), ids
     
 
-# %% ../nbs/00_core.ipynb 14
+# %% ../nbs/00_core.ipynb 15
 def get_matrix_from_mapping(mapping, ids=None):
     if ids is not None:
         mapping = filter_mapping(mapping, ids)
