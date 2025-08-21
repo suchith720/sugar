@@ -93,7 +93,7 @@ def save_llm_input(fname:str, items:List, sep:Optional[str]='->', encoding:Optio
             for i,o in enumerate(item):
                 o = str(o).replace("\n", "").replace("\t", "").replace("->", "")
                 if i == 0: line = o
-                else: line += o
+                else: line += sep + o
             file.write(line + '\n')
             
 
