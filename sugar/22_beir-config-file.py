@@ -10,26 +10,27 @@ from typing import Optional
 from xcai.config import PARAM
 
 # %% ../nbs/22_beir-config-file.ipynb 4
-def get_config_key(model:Optional[str]='', entity_type:Optional[str]='', suffix:Optional[str]=''):
-    key = "data"
-    if len(entity_type): key = f"{key}_{entity_type}"
-    if len(model): key = f"{key}-{model}"
+def get_config_key(model:Optional[str]='', meta_type:Optional[str]='', suffix:Optional[str]=''):
+    key = ""
+    if len(model): key = f"{key}-{model}" if len(key) else model
+    if len(meta_type): key = f"{key}-{meta_type}" if len(key) else meta_type
     if len(suffix): key = f"{key}_{suffix}"
-    return key
+    return f"data_lbl_{key}"
     
 
 # %% ../nbs/22_beir-config-file.ipynb 5
-def get_dataset_config(data_dir:str, model:Optional[str]='', entity_type:Optional[str]='', suffix:Optional[str]='', 
-                       add_trn_cfg:Optional[bool]=True, add_linker_cfg:Optional[bool]=True, **kwargs):
-    mat_suffix = f'_{suffix}' if len(suffix) else ''
-    raw_suffix = f'.{suffix}' if len(suffix) else ''
-
-    cfg_key = get_config_key(model, entity_type, suffix)
+def get_dataset_config(data_dir:str, model:Optional[str]='', meta_prefix:Optional[str]='lnk', 
+                       meta_type:Optional[str]='', suffix:Optional[str]='', add_trn_cfg:Optional[bool]=True, 
+                       add_linker_cfg:Optional[bool]=True, **kwargs):
+    cfg_key = get_config_key(model, meta_type, suffix)
     
-    entity_suffix = f'{entity_type}_' if len(entity_type) else ''
-    if len(model): entity_suffix = f'{entity_suffix}{model}_'
+    suffix = f'_{suffix}' if len(suffix) else ''
+    
+    meta_suffix = f'{meta_suffix}_' if len(meta_suffix) else ''
+    if len(model): meta_suffix = f'{meta_suffix}{model}_'
 
-    PARAM["main_max_lbl_sequence_length"] = 128
+    PARAM["main_max_lbl_sequence_length"] = 512
+    PARAM["main_max_data_sequence_length"] = 300
     for k,v in kwargs.items():
         if k in PARAM and v is not None: PARAM[k] = v
             
@@ -42,33 +43,33 @@ def get_dataset_config(data_dir:str, model:Optional[str]='', entity_type:Optiona
     
     if add_trn_cfg:
         trn_cfg = {
-            "data_lbl": f"{data_dir}/trn_X_Y{mat_suffix}.npz",
+            "data_lbl": f"{data_dir}/trn_X_Y{suffix}.npz",
             "data_info": f"{data_dir}/raw_data/train.raw.csv",
-            "lbl_info": f"{data_dir}/raw_data/label{raw_suffix}.raw.csv",
+            "lbl_info": f"{data_dir}/raw_data/label{suffix}.raw.csv",
         }
         if add_linker_cfg:
             trn_meta_cfg = {
-                "prefix": "ent",
-                "data_meta": f"{data_dir}/{entity_suffix}trn_X_Y.npz",
-                "lbl_meta": f"{data_dir}/{entity_suffix}lbl_X_Y{mat_suffix}.npz",
-                "meta_info": f"{data_dir}/raw_data/{entity_suffix[:-1]}.raw.csv"
+                "prefix": meta_prefix,
+                "data_meta": f"{data_dir}/{meta_suffix}trn_X_Y.npz",
+                "lbl_meta": f"{data_dir}/{meta_suffix}lbl_X_Y{suffix}.npz",
+                "meta_info": f"{data_dir}/raw_data/{meta_suffix[:-1]}.raw.csv"
             }
-            trn_cfg["ent_meta"] = trn_meta_cfg
+            trn_cfg[f"{meta_prefix}_meta"] = trn_meta_cfg
         cfg[cfg_key]["path"]["train"] = trn_cfg
 
     tst_cfg = {
-        "data_lbl": f"{data_dir}/tst_X_Y{mat_suffix}.npz",
+        "data_lbl": f"{data_dir}/tst_X_Y{suffix}.npz",
         "data_info": f"{data_dir}/raw_data/test.raw.csv",
-        "lbl_info": f"{data_dir}/raw_data/label{raw_suffix}.raw.csv",
+        "lbl_info": f"{data_dir}/raw_data/label{suffix}.raw.csv",
     }
     if add_linker_cfg:
         tst_meta_cfg = {
-            "prefix": "ent",
-            "data_meta": f"{data_dir}/{entity_suffix}tst_X_Y.npz",
-            "lbl_meta": f"{data_dir}/{entity_suffix}lbl_X_Y{mat_suffix}.npz",
-            "meta_info": f"{data_dir}/raw_data/{entity_suffix[:-1]}.raw.csv"
+            "prefix": meta_prefix,
+            "data_meta": f"{data_dir}/{meta_suffix}tst_X_Y.npz",
+            "lbl_meta": f"{data_dir}/{meta_suffix}lbl_X_Y{suffix}.npz",
+            "meta_info": f"{data_dir}/raw_data/{meta_suffix[:-1]}.raw.csv"
         }
-        tst_cfg["ent_meta"] = tst_meta_cfg
+        tst_cfg[f"{meta_prefix}_meta"] = tst_meta_cfg
     cfg[cfg_key]["path"]["test"] = tst_cfg
     
     return cfg
@@ -79,11 +80,13 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, required=True)
     parser.add_argument('--model', type=str, default='')
-    parser.add_argument('--entity_type', type=str, default='')
+    parser.add_argument('--meta_prefix', type=str, default='')
+    parser.add_argument('--meta_type', type=str, default='')
     parser.add_argument('--suffix', type=str, default='')
     parser.add_argument('--add_trn_cfg', type=int, default=1)
     parser.add_argument('--add_linker_cfg', type=int, default=1)
     parser.add_argument('--add_linker_cfg', type=int, default=1)
+    parser.add_argument('--main_max_data_sequence_length', type=int, default=None)
     parser.add_argument('--main_max_lbl_sequence_length', type=int, default=None)
     return parser.parse_args()
     
@@ -92,11 +95,13 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     
-    config = get_dataset_config(args.data_dir, args.model, args.entity_type, args.suffix, add_trn_cfg=args.add_trn_cfg, 
-                                add_linker_cfg=args.add_linker_cfg, main_max_lbl_sequence_length=args.main_max_lbl_sequence_length)
+    config = get_dataset_config(args.data_dir, args.model, args.meta_prefix, args.meta_type, args.suffix, 
+                                add_trn_cfg=args.add_trn_cfg, add_linker_cfg=args.add_linker_cfg,
+                                main_max_data_sequence_length=args.main_max_data_sequence_length,
+                                main_max_lbl_sequence_length=args.main_max_lbl_sequence_length)
     os.makedirs(f'{args.data_dir}/configs/', exist_ok=True)
 
-    fname = get_config_key(args.model, args.entity_type, args.suffix)
+    fname = get_config_key(args.model, args.meta_type, args.suffix)
     
     with open(f'{args.data_dir}/configs/{fname}.json', 'w') as file:
         json.dump(config, file, indent=4)
