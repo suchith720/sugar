@@ -85,7 +85,6 @@ def parse_args():
     parser.add_argument('--suffix', type=str, default='')
     parser.add_argument('--add_trn_cfg', type=int, default=1)
     parser.add_argument('--add_linker_cfg', type=int, default=1)
-    parser.add_argument('--add_linker_cfg', type=int, default=1)
     parser.add_argument('--main_max_data_sequence_length', type=int, default=None)
     parser.add_argument('--main_max_lbl_sequence_length', type=int, default=None)
     return parser.parse_args()
