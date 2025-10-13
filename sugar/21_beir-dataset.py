@@ -157,7 +157,7 @@ def combine_info(info_1:Tuple, info_2:Tuple):
 # %% ../nbs/21_beir-dataset.ipynb 31
 def get_dataset(qry_file:str, lbl_file:str, tst_file:str, dev_file:Optional[str]=None, trn_file:Optional[str]=None, 
                 gen_trn_file:Optional[str]=None):
-    queries = load_queries(query_file)
+    queries = load_queries(qry_file)
     
     lbl_txt, lbl_id2idx = load_labels(lbl_file)
     lbl_ids = sorted(lbl_id2idx, key=lambda x: lbl_id2idx[x])
