@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from huggingface_hub import snapshot_download
 from typing import Optional, Dict, Tuple, List
 
-from .core import *
+from sugar.core import *
 
 # %% ../nbs/21_beir-dataset.ipynb 4
 def unzip_file(input_file, output_file):

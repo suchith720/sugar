@@ -1,15 +1,25 @@
-# python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/touche2020/ --save_dir /data/datasets/beir/touche2020/XC/
+#!/bin/bash
 
-# python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/cqadupstack/android --save_dir /data/datasets/beir/cqadupstack/android/XC 
-# python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/cqadupstack/english --save_dir /data/datasets/beir/cqadupstack/english/XC
-# python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/cqadupstack/gaming --save_dir /data/datasets/beir/cqadupstack/gaming/XC
-# python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/cqadupstack/gis --save_dir /data/datasets/beir/cqadupstack/gis/XC
-# python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/cqadupstack/mathematica --save_dir /data/datasets/beir/cqadupstack/mathematica/XC
-# python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/cqadupstack/physics --save_dir /data/datasets/beir/cqadupstack/physics/XC
-# python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/cqadupstack/programmers --save_dir /data/datasets/beir/cqadupstack/programmers/XC
-# python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/cqadupstack/stats --save_dir /data/datasets/beir/cqadupstack/stats/XC
-# python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/cqadupstack/tex --save_dir /data/datasets/beir/cqadupstack/tex/XC
-# python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/cqadupstack/unix --save_dir /data/datasets/beir/cqadupstack/unix/XC
-# python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/cqadupstack/webmasters --save_dir /data/datasets/beir/cqadupstack/webmasters/XC
-python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/cqadupstack/wordpress --save_dir /data/datasets/beir/cqadupstack/wordpress/XC
+datasets="arguana climate-fever dbpedia-entity fever fiqa hotpotqa nfcorpus nq quora scidocs scifact webis-touche2020 trec-covid \
+	cqadupstack/android cqadupstack/english cqadupstack/gaming cqadupstack/gis cqadupstack/mathematica cqadupstack/physics \
+	cqadupstack/programmers cqadupstack/stats cqadupstack/tex cqadupstack/unix cqadupstack/webmasters cqadupstack/wordpress"
 
+for dset in $datasets
+do
+	python sugar/21_beir-dataset.py --data_dir /data/datasets/beir/$dset/ --save_dir /data/datasets/beir/$dset/XC/
+
+	echo $dset
+	echo ---------------
+
+	data_dir="/data/datasets/beir"
+	files="$data_dir/$dset/XC/trn_X_Y.npz $data_dir/$dset/XC/tst_X_Y.npz $data_dir/$dset/XC/raw_data/train.raw.csv \
+		$data_dir/$dset/XC/raw_data/test.raw.csv $data_dir/$dset/XC/raw_data/label.raw.csv"
+	for file in $files
+	do
+		if [ ! -f $file ]
+		then
+			echo $file
+		fi
+	done
+	echo
+done
