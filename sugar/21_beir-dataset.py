@@ -36,13 +36,13 @@ def download_beir(dset:str, data_dir:Optional[str]=None):
 
     try:
         snapshot_download(repo_id=f"BeIR/{dset}-qrels", repo_type="dataset", local_dir=f"{data_dir}/qrels")
-    except:
+    except Exception as e:
         print(f"Failed to download '{dset}-qrels': {e}")
 
     try:
         snapshot_download(repo_id=f"BeIR/{dset}-generated-queries", repo_type="dataset", local_dir=f"{data_dir}/generated-queries")
         unzip_file(f'{data_dir}/generated-queries/train.jsonl.gz', f'{data_dir}/generated-queries/train.jsonl')
-    except:
+    except Exception as e:
         print(f"Failed to download '{dset}-generated-queries': {e}")
     
 
