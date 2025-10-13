@@ -81,7 +81,7 @@ def load_qrels(fname:str, lbl_id2idx:Dict):
     
 
 # %% ../nbs/21_beir-dataset.ipynb 18
-def load_generated_queries(fname:str, lbl_txt:List, lbl_id2txt:Dict):
+def load_generated_queries(fname:str, lbl_txt:List, lbl_id2idx:Dict):
     queries = dict()
     qry2lbls = {"scores": {}, "labels": {}}
     
