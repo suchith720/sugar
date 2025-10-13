@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from huggingface_hub import snapshot_download
 from typing import Optional, Dict, Tuple, List
 
-from sugar.core import *
+from .core import *
 
 # %% ../nbs/21_beir-dataset.ipynb 4
 def unzip_file(input_file, output_file):
@@ -130,14 +130,14 @@ def load_query_info(fname:str, queries:Dict, lbl_id2idx:Dict):
     mat = ids = txt = None
     if fname is not None and os.path.exists(fname):
         mat, ids = get_matrix(fname, lbl_id2idx)
-        txt = [queries[o] for o in ids]
+        txt = [queries[str(o)] for o in ids]
     return mat, ids, txt
 
 def load_generated_query_info(fname:str, lbl_txt:List, lbl_id2idx:Dict):
     mat = ids = txt = None
     if fname is not None and os.path.exists(fname):
         queries, mat, ids = get_gen_matrix(fname, lbl_txt, lbl_id2idx)
-        txt = [queries[o] for o in ids]
+        txt = [queries[str(o)] for o in ids]
     return mat, ids, txt
     
 
