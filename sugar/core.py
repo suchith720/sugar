@@ -72,6 +72,7 @@ def save_raw_csv(fname, ids, raw, id_name:Optional[str]="identifier", raw_name:O
     assert len(ids) == len(raw), "Number of identifiers and elements in raw text should be the same."
     raw = [o.replace("\n", " ").replace("\r", " ") for o in raw]
     df = pd.DataFrame({id_name: ids, raw_name: raw})
+    df = df.replace({r'[\x00-\x1f\x7f]': ' '}, regex=True)
     df.to_csv(fname, index=False)
 
 def save_raw_file(fname, ids, raw, id_name:Optional[str]="identifier", raw_name:Optional[str]="text", 
