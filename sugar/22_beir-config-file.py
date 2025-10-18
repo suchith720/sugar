@@ -27,17 +27,18 @@ def get_data_config(
             "parameters": PARAM,
         }
     }
+    cfg["data"]["path"]["test"] = {
+        "data_lbl": f"{data_dir}/tst_X_Y.npz",
+        "data_info": f"{data_dir}/raw_data/test.raw.csv",
+        "lbl_info": f"{data_dir}/raw_data/label.raw.csv",
+    }
     if add_trn_cfg:
         cfg["data"]["path"]["train"] = {
             "data_lbl": f"{data_dir}/trn_X_Y.npz",
             "data_info": f"{data_dir}/raw_data/train.raw.csv",
             "lbl_info": f"{data_dir}/raw_data/label.raw.csv",
         }
-    cfg["data"]["path"]["test"] = {
-        "data_lbl": f"{data_dir}/tst_X_Y.npz",
-        "data_info": f"{data_dir}/raw_data/test.raw.csv",
-        "lbl_info": f"{data_dir}/raw_data/label.raw.csv",
-    }    
+        del cfg["data"]["path"]["test"]["lbl_info"]
     return cfg
     
 

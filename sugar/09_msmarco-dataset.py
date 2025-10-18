@@ -2,7 +2,7 @@
 
 # %% auto 0
 __all__ = ['unzip_file', 'download_msmarco', 'load_queries', 'load_labels', 'load_qrels', 'get_matrix_from_qry2lbl', 'get_matrix',
-           'load_query_info', 'get_msmarco', 'save_msmarco', 'get_and_save_msmarco', 'parse_args']
+           'load_query_info', 'get_msmarco', 'sample_msmarco', 'save_msmarco', 'get_and_save_msmarco', 'parse_args']
 
 # %% ../nbs/09_msmarco-dataset.ipynb 2
 import os, json, pandas as pd, scipy.sparse as sp, numpy as np, argparse, gzip, shutil
@@ -116,9 +116,20 @@ def _get_valid_lbl_idx(tst_mat:sp.csr_matrix, trn_mat:sp.csr_matrix, type:Option
         return np.where(trn_mat.getnnz(axis=0) > 0)[0]
     else:
         raise ValueError(f"Invalid sampling type: {type}.")
-        
 
-# %% ../nbs/09_msmarco-dataset.ipynb 27
+def sample_msmarco(lbl_info:Dict, tst_info:Dict, trn_info:Dict, sampling_type:Optional[str]=None):
+    idx = _get_valid_lbl_idx(tst_info[0], trn_info[0], type=sampling_type)
+    
+    lbl_ids = [lbl_info[0] for i in idx]
+    lbl_txt = [lbl_info[1] for i in idx]
+
+    tst_mat = tst_info[0][:, idx]
+    trn_mat = trn_info[0][:, idx]
+
+    return (lbl_ids, lbl_txt), (tst_mat, tst_info[1], tst_info[2]), (trn_mat, trn_info[1], trn_info[2])
+    
+
+# %% ../nbs/09_msmarco-dataset.ipynb 26
 def save_msmarco(save_dir:str, lbl_info:Tuple, tst_info:Tuple, trn_info:Optional[Tuple]=None, suffix:Optional[str]=''):
     os.makedirs(save_dir, exist_ok=True)
     suffix = f'_{suffix}' if len(suffix) else ''
@@ -134,20 +145,31 @@ def save_msmarco(save_dir:str, lbl_info:Tuple, tst_info:Tuple, trn_info:Optional
         save_raw_file(f'{save_dir}/raw_data/train.raw.csv', trn_info[1], trn_info[2])
     
 
-# %% ../nbs/09_msmarco-dataset.ipynb 30
-def get_and_save_msmarco(query_file:str, lbl_file:str, trn_file:str, tst_file:str, save_dir:str=None, sampling_type=None, suffix=''):
-    trn_info, tst_info, lbl_info = get_msmarco(query_file, lbl_file, trn_file, tst_file)
+# %% ../nbs/09_msmarco-dataset.ipynb 27
+def get_and_save_msmarco(
+    qry_file:str, 
+    lbl_file:str, 
+    tst_file:str, 
+    trn_file:Optional[str]=None,
+    save_dir:Optional[str]=None, 
+    sampling_type:Optional[str]=None, 
+    suffix:Optional[str]=''
+):
+    lbl_info, tst_info, trn_info = get_msmarco(qry_file, lbl_file, tst_file, trn_file)
+
+    if sampling_type is not None:
+        suffix = f"{suffix}_{sampling_type}"
+        lbl_info, tst_info, trn_info = sample_msmarco(lbl_info, tst_info, trn_info, sampling_type=sampling_type)
     
-    if sampling_type is not None: 
-        sample_msmarco(trn_info, tst_info, lbl_info, sampling_type)
-        
-    if save_dir is not None: 
-        save_msmarco(save_dir, trn_info, tst_info, lbl_info, suffix)
+    if save_dir is not None:
+        os.makedirs(save_dir, exist_ok=True)
+        save_msmarco(save_dir, lbl_info, tst_info, trn_info, suffix=suffix)
         
     return trn_info, tst_info, lbl_info
     
+    
 
-# %% ../nbs/09_msmarco-dataset.ipynb 31
+# %% ../nbs/09_msmarco-dataset.ipynb 29
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--download', action='store_true')
@@ -158,18 +180,18 @@ def parse_args():
     return parser.parse_args()
     
 
-# %% ../nbs/09_msmarco-dataset.ipynb 32
+# %% ../nbs/09_msmarco-dataset.ipynb 30
 if __name__ == '__main__':
     args = parse_args()
     if args.download: 
         download_msmarco(args.data_dir)
     else:
-        get_and_save_msmarco(f'{args.data_dir}/queries.jsonl', f'{args.data_dir}/corpus.jsonl', f'{args.data_dir}/qrels/train.tsv', 
-                             f'{args.data_dir}/qrels/dev.tsv', args.save_dir, 'xc', 'xc')
-        
-        get_and_save_msmarco(f'{args.data_dir}/queries.jsonl', f'{args.data_dir}/corpus.jsonl', f'{args.data_dir}/qrels/train.tsv', 
-                             f'{args.data_dir}/qrels/dev.tsv', args.save_dir, 'exact', 'exact')
+        get_and_save_msmarco(f'{args.data_dir}/queries.jsonl', f'{args.data_dir}/corpus.jsonl', f'{args.data_dir}/qrels/dev.tsv', 
+                             f'{args.data_dir}/qrels/train.tsv', save_dir=args.save_dir, sampling_type='xc')
 
-        get_and_save_msmarco(f'{args.data_dir}/queries.jsonl', f'{args.data_dir}/corpus.jsonl', f'{args.data_dir}/qrels/train.tsv', 
-                             f'{args.data_dir}/qrels/dev.tsv', args.save_dir)
-                          
+        get_and_save_msmarco(f'{args.data_dir}/queries.jsonl', f'{args.data_dir}/corpus.jsonl', f'{args.data_dir}/qrels/dev.tsv', 
+                             f'{args.data_dir}/qrels/train.tsv', save_dir=args.save_dir, sampling_type='exact')
+
+        get_and_save_msmarco(f'{args.data_dir}/queries.jsonl', f'{args.data_dir}/corpus.jsonl', f'{args.data_dir}/qrels/dev.tsv', 
+                             f'{args.data_dir}/qrels/train.tsv', save_dir=args.save_dir)
+        
