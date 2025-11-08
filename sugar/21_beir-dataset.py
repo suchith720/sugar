@@ -246,7 +246,9 @@ if __name__ == '__main__':
     if args.download: 
         download_beir(args.dataset, args.data_dir)
     else:
+        suffix = 'generated' if args.use_generated_queries else ''
         gen_trn_file =  f'{args.data_dir}/generated-queries/train.jsonl' if args.use_generated_queries else None
+        
         get_and_save_dataset(
             qry_file=f'{args.data_dir}/queries.jsonl', 
             lbl_file=f'{args.data_dir}/corpus.jsonl', 
@@ -254,6 +256,7 @@ if __name__ == '__main__':
             dev_file=f'{args.data_dir}/qrels/dev.tsv',
             trn_file=f'{args.data_dir}/qrels/train.tsv',
             gen_trn_file=gen_trn_file,
-            save_dir=args.save_dir
+            save_dir=args.save_dir,
+            suffix=suffix,
         )
                           
