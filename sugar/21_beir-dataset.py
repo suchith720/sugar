@@ -173,27 +173,53 @@ def get_dataset(qry_file:str, lbl_file:str, tst_file:str, dev_file:Optional[str]
     
 
 # %% ../nbs/21_beir-dataset.ipynb 33
-def save_dataset(save_dir:str, lbl_info:Tuple, tst_info:Tuple, dev_info:Optional[Tuple]=None, trn_info:Optional[Tuple]=None, 
-                 suffix:Optional[str]=''):
+def save_dataset(save_dir:str, lbl_info:Tuple, tst_info:Tuple, dev_info:Optional[Tuple]=None, 
+                 trn_info:Optional[Tuple]=None, suffix:Optional[str]=''):
+
+    def get_raw_file(save_dir:str, type:str, suffix:str, excluded_suffix:List):
+        return (
+            f'{save_dir}/raw_data/{type}.raw.csv' 
+            if suffix in excluded_suffix else 
+            f'{save_dir}/raw_data/{type}{suffix}.raw.csv'
+        )
+
+    def get_mat_file(save_dir:str, type:str, suffix:str, excluded_suffix:List):
+        return (
+            f'{save_dir}/{type}_X_Y.npz' 
+            if suffix in excluded_suffix else 
+            f'{save_dir}/{type}_X_Y{suffix}.npz'
+        )
+        
     os.makedirs(save_dir, exist_ok=True)
     suffix = f'_{suffix}' if len(suffix) else ''
 
     os.makedirs(f'{save_dir}/raw_data', exist_ok=True)
-    save_raw_file(f'{save_dir}/raw_data/label{suffix}.raw.csv', lbl_info[0], lbl_info[1])
+    
+    lbl_raw_file = get_raw_file(save_dir, 'label', suffix, ['_generated'])
+    save_raw_file(lbl_raw_file, lbl_info[0], lbl_info[1])
 
-    sp.save_npz(f'{save_dir}/tst_X_Y{suffix}.npz', tst_info[0])
-    save_raw_file(f'{save_dir}/raw_data/test{suffix}.raw.csv', tst_info[1], tst_info[2])
+    tst_file = get_mat_file(save_dir, 'tst', suffix, ['_generated'])
+    sp.save_npz(tst_file, tst_info[0])
+
+    tst_raw_file = get_raw_file(save_dir, 'test', suffix, ['_generated', '_exact', '_xc'])
+    save_raw_file(tst_raw_file, tst_info[1], tst_info[2])
     
     if dev_info[0] is not None:
-        sp.save_npz(f'{save_dir}/dev_X_Y{suffix}.npz', dev_info[0])
-        save_raw_file(f'{save_dir}/raw_data/dev{suffix}.raw.csv', dev_info[1], dev_info[2])
+        dev_file = get_mat_file(save_dir, 'dev', suffix, ['_generated'])
+        sp.save_npz(dev_file, dev_info[0])
+        
+        dev_raw_file = get_raw_file(save_dir, 'dev', suffix, ['_generated', '_exact', '_xc'])
+        save_raw_file(dev_raw_file, dev_info[1], dev_info[2])
         
     if trn_info[0] is not None:
-        sp.save_npz(f'{save_dir}/trn_X_Y{suffix}.npz', trn_info[0])
-        save_raw_file(f'{save_dir}/raw_data/train{suffix}.raw.csv', trn_info[1], trn_info[2])
+        trn_file = get_mat_file(save_dir, 'trn', suffix, [])
+        sp.save_npz(trn_file, trn_info[0])
+        
+        trn_raw_file = get_raw_file(save_dir, 'train', suffix, ['_exact', '_xc'])
+        save_raw_file(trn_raw_file, trn_info[1], trn_info[2])
     
 
-# %% ../nbs/21_beir-dataset.ipynb 34
+# %% ../nbs/21_beir-dataset.ipynb 35
 def _get_valid_lbl_idx(tst_mat:sp.csr_matrix, trn_mat:sp.csr_matrix, type:Optional[str]=None):
     if type == 'exact':
         trn_valid_idx = np.array([], dtype=tst_mat.dtype) if trn_mat is None else np.where(trn_mat.getnnz(axis=0) > 0)[0]
@@ -205,7 +231,7 @@ def _get_valid_lbl_idx(tst_mat:sp.csr_matrix, trn_mat:sp.csr_matrix, type:Option
         raise ValueError(f"Invalid sampling type: {type}.")
     
 
-# %% ../nbs/21_beir-dataset.ipynb 35
+# %% ../nbs/21_beir-dataset.ipynb 36
 def get_and_save_dataset(
     qry_file:str, 
     lbl_file:str, 
@@ -227,7 +253,7 @@ def get_and_save_dataset(
     return trn_info, dev_info, tst_info, lbl_info
     
 
-# %% ../nbs/21_beir-dataset.ipynb 36
+# %% ../nbs/21_beir-dataset.ipynb 37
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--download', action='store_true')
@@ -240,7 +266,7 @@ def parse_args():
     return parser.parse_args()
     
 
-# %% ../nbs/21_beir-dataset.ipynb 37
+# %% ../nbs/21_beir-dataset.ipynb 38
 if __name__ == '__main__':
     args = parse_args()
     if args.download: 
