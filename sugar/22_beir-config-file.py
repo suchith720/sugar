@@ -6,7 +6,7 @@ __all__ = ['get_data_config', 'parse_args']
 # %% ../nbs/22_beir-config-file.ipynb 2
 import json, os, argparse
 
-from typing import Optional
+from typing import Optional, List
 from xcai.config import PARAM
 
 # %% ../nbs/22_beir-config-file.ipynb 4
