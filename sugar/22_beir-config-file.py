@@ -12,7 +12,8 @@ from xcai.config import PARAM
 # %% ../nbs/22_beir-config-file.ipynb 4
 def get_data_config(
     data_dir:str, 
-    add_trn_cfg:Optional[bool]=True,  
+    add_trn_cfg:Optional[bool]=True,
+    suffix:Optional[str]='',
     **kwargs
 ):
     def get_raw_file(save_dir:str, type:str, suffix:str, excluded_suffix:List):
@@ -62,6 +63,7 @@ def get_data_config(
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str)
+    parser.add_argument('--suffix', type=str, default='')
     parser.add_argument('--add_train_config', action='store_true')
     parser.add_argument('--main_max_data_sequence_length', type=int, default=None)
     parser.add_argument('--main_max_lbl_sequence_length', type=int, default=None)
@@ -78,7 +80,7 @@ if __name__ == '__main__':
     }
 
     assert os.path.exists(args.data_dir), f"Path does not exist: {args.data_dir}"
-    config = get_data_config(args.data_dir, add_trn_cfg=args.add_train_config, **kwargs)
+    config = get_data_config(args.data_dir, add_trn_cfg=args.add_train_config, suffix=args.suffix, **kwargs)
     
     os.makedirs(f'{args.data_dir}/configs/', exist_ok=True)
     with open(f'{args.data_dir}/configs/data.json', 'w') as file:
