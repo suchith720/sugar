@@ -214,7 +214,7 @@ def get_and_save_dataset(
     trn_file:Optional[str]=None,
     gen_trn_file:Optional[str]=None,
     save_dir:Optional[str]=None, 
-    sampling_type:Optional[str]=None, 
+    sampling_type:Optional[str]=None,
     suffix:Optional[str]=''
 ):
     lbl_info, tst_info, dev_info, trn_info = get_dataset(qry_file, lbl_file, tst_file, dev_file, trn_file, 
@@ -234,6 +234,7 @@ def parse_args():
     parser.add_argument('--dataset', type=str)
     
     parser.add_argument('--data_dir', type=str, required=True)
+    parser.add_argument('--use_generated_queries', action='store_true')
     parser.add_argument('--save_dir', type=str)
     
     return parser.parse_args()
@@ -245,13 +246,14 @@ if __name__ == '__main__':
     if args.download: 
         download_beir(args.dataset, args.data_dir)
     else:
+        gen_trn_file =  f'{args.data_dir}/generated-queries/train.jsonl' if args.use_generated_queries else None
         get_and_save_dataset(
             qry_file=f'{args.data_dir}/queries.jsonl', 
             lbl_file=f'{args.data_dir}/corpus.jsonl', 
             tst_file=f'{args.data_dir}/qrels/test.tsv',
             dev_file=f'{args.data_dir}/qrels/dev.tsv',
             trn_file=f'{args.data_dir}/qrels/train.tsv',
-            gen_trn_file=f'{args.data_dir}/generated-queries/train.jsonl',
+            gen_trn_file=gen_trn_file,
             save_dir=args.save_dir
         )
                           
