@@ -198,11 +198,12 @@ def save_dataset(save_dir:str, lbl_info:Tuple, tst_info:Tuple, dev_info:Optional
     lbl_raw_file = get_raw_file(save_dir, 'label', suffix, ['_generated'])
     save_raw_file(lbl_raw_file, lbl_info[0], lbl_info[1])
 
-    tst_file = get_mat_file(save_dir, 'tst', suffix, ['_generated'])
-    sp.save_npz(tst_file, tst_info[0])
-
-    tst_raw_file = get_raw_file(save_dir, 'test', suffix, ['_generated', '_exact', '_xc'])
-    save_raw_file(tst_raw_file, tst_info[1], tst_info[2])
+    if tst_info[0] is not None:
+        tst_file = get_mat_file(save_dir, 'tst', suffix, ['_generated'])
+        sp.save_npz(tst_file, tst_info[0])
+    
+        tst_raw_file = get_raw_file(save_dir, 'test', suffix, ['_generated', '_exact', '_xc'])
+        save_raw_file(tst_raw_file, tst_info[1], tst_info[2])
     
     if dev_info[0] is not None:
         dev_file = get_mat_file(save_dir, 'dev', suffix, ['_generated'])
