@@ -182,15 +182,15 @@ def save_dataset(save_dir:str, lbl_info:Tuple, tst_info:Tuple, dev_info:Optional
     save_raw_file(f'{save_dir}/raw_data/label{suffix}.raw.csv', lbl_info[0], lbl_info[1])
 
     sp.save_npz(f'{save_dir}/tst_X_Y{suffix}.npz', tst_info[0])
-    save_raw_file(f'{save_dir}/raw_data/test.raw.csv', tst_info[1], tst_info[2])
+    save_raw_file(f'{save_dir}/raw_data/test{suffix}.raw.csv', tst_info[1], tst_info[2])
     
     if dev_info[0] is not None:
         sp.save_npz(f'{save_dir}/dev_X_Y{suffix}.npz', dev_info[0])
-        save_raw_file(f'{save_dir}/raw_data/dev.raw.csv', dev_info[1], dev_info[2])
+        save_raw_file(f'{save_dir}/raw_data/dev{suffix}.raw.csv', dev_info[1], dev_info[2])
         
     if trn_info[0] is not None:
         sp.save_npz(f'{save_dir}/trn_X_Y{suffix}.npz', trn_info[0])
-        save_raw_file(f'{save_dir}/raw_data/train.raw.csv', trn_info[1], trn_info[2])
+        save_raw_file(f'{save_dir}/raw_data/train{suffix}.raw.csv', trn_info[1], trn_info[2])
     
 
 # %% ../nbs/21_beir-dataset.ipynb 34
