@@ -37,7 +37,7 @@ def get_data_config(
         if k in PARAM and v is not None: PARAM[k] = v
 
     suffix = f'_{suffix}' if len(suffix) else ''
-    config_key = f"data_{suffix}"
+    config_key = f"data{suffix}"
     
     cfg = {
         config_key: {
