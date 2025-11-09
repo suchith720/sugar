@@ -60,7 +60,7 @@ def get_data_config(
             cfg[config_key]["path"]["train"] = {"data_lbl": trn_file, "data_info": trn_raw_file, 
                                             "lbl_info": lbl_raw_file}
             del cfg[config_key]["path"]["test"]["lbl_info"]
-    return cfg
+    return cfg, config_key
     
 
 # %% ../nbs/22_beir-config-file.ipynb 5
@@ -84,9 +84,10 @@ if __name__ == '__main__':
     }
 
     assert os.path.exists(args.data_dir), f"Path does not exist: {args.data_dir}"
-    config = get_data_config(args.data_dir, add_trn_cfg=args.add_train_config, suffix=args.suffix, **kwargs)
+    config, config_key = get_data_config(args.data_dir, add_trn_cfg=args.add_train_config, 
+                                         suffix=args.suffix, **kwargs)
     
     os.makedirs(f'{args.data_dir}/configs/', exist_ok=True)
-    with open(f'{args.data_dir}/configs/data.json', 'w') as file:
+    with open(f'{args.data_dir}/configs/{config_key}.json', 'w') as file:
         json.dump(config, file, indent=4)
         
