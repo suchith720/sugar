@@ -35,9 +35,12 @@ def get_data_config(
     
     for k,v in kwargs.items():
         if k in PARAM and v is not None: PARAM[k] = v
-            
+
+    suffix = f'_{suffix}' if len(suffix) else ''
+    config_key = f"data_{suffix}"
+    
     cfg = {
-        "data": {
+        config_key: {
             "path": {},
             "parameters": PARAM,
         }
@@ -47,16 +50,16 @@ def get_data_config(
     tst_raw_file = get_raw_file(data_dir, 'test', suffix, ['_generated', '_exact', '_xc'])
     lbl_raw_file = get_raw_file(data_dir, 'label', suffix, ['_generated'])
     
-    cfg["data"]["path"]["test"] = {"data_lbl": tst_file, "data_info": tst_raw_file, "lbl_info": lbl_raw_file}
+    cfg[config_key]["path"]["test"] = {"data_lbl": tst_file, "data_info": tst_raw_file, "lbl_info": lbl_raw_file}
     
     if add_trn_cfg:
         trn_file = get_mat_file(data_dir, 'trn', suffix, [])
         trn_raw_file = get_raw_file(data_dir, 'train', suffix, ['_exact', '_xc'])
 
         if os.path.exists(trn_file):
-            cfg["data"]["path"]["train"] = {"data_lbl": trn_file, "data_info": trn_raw_file, 
+            cfg[config_key]["path"]["train"] = {"data_lbl": trn_file, "data_info": trn_raw_file, 
                                             "lbl_info": lbl_raw_file}
-            del cfg["data"]["path"]["test"]["lbl_info"]
+            del cfg[config_key]["path"]["test"]["lbl_info"]
     return cfg
     
 
