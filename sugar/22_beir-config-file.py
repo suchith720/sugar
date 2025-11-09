@@ -16,18 +16,18 @@ def get_data_config(
     suffix:Optional[str]='',
     **kwargs
 ):
-    def get_raw_file(save_dir:str, type:str, suffix:str, excluded_suffix:List):
+    def get_raw_file(data_dir:str, type:str, suffix:str, excluded_suffix:List):
         return (
-            f'{save_dir}/raw_data/{type}.raw.csv' 
+            f'{data_dir}/raw_data/{type}.raw.csv' 
             if suffix in excluded_suffix else 
-            f'{save_dir}/raw_data/{type}{suffix}.raw.csv'
+            f'{data_dir}/raw_data/{type}{suffix}.raw.csv'
         )
 
-    def get_mat_file(save_dir:str, type:str, suffix:str, excluded_suffix:List):
+    def get_mat_file(data_dir:str, type:str, suffix:str, excluded_suffix:List):
         return (
-            f'{save_dir}/{type}_X_Y.npz' 
+            f'{data_dir}/{type}_X_Y.npz' 
             if suffix in excluded_suffix else 
-            f'{save_dir}/{type}_X_Y{suffix}.npz'
+            f'{data_dir}/{type}_X_Y{suffix}.npz'
         )
         
     PARAM["main_max_data_sequence_length"] = 300
@@ -43,19 +43,20 @@ def get_data_config(
         }
     }
 
-    tst_file = get_mat_file(save_dir, 'tst', suffix, ['_generated'])
-    tst_raw_file = get_raw_file(save_dir, 'test', suffix, ['_generated', '_exact', '_xc'])
-    lbl_raw_file = get_raw_file(save_dir, 'label', suffix, ['_generated'])
+    tst_file = get_mat_file(data_dir, 'tst', suffix, ['_generated'])
+    tst_raw_file = get_raw_file(data_dir, 'test', suffix, ['_generated', '_exact', '_xc'])
+    lbl_raw_file = get_raw_file(data_dir, 'label', suffix, ['_generated'])
     
     cfg["data"]["path"]["test"] = {"data_lbl": tst_file, "data_info": tst_raw_file, "lbl_info": lbl_raw_file}
     
     if add_trn_cfg:
-        trn_file = get_mat_file(save_dir, 'trn', suffix, [])
-        trn_raw_file = get_raw_file(save_dir, 'train', suffix, ['_exact', '_xc'])
-        
-        cfg["data"]["path"]["train"] = {"data_lbl": trn_file, "data_info": trn_raw_file,
-                                        "lbl_info": lbl_raw_file}
-        del cfg["data"]["path"]["test"]["lbl_info"]
+        trn_file = get_mat_file(data_dir, 'trn', suffix, [])
+        trn_raw_file = get_raw_file(data_dir, 'train', suffix, ['_exact', '_xc'])
+
+        if os.path.exists(trn_file):
+            cfg["data"]["path"]["train"] = {"data_lbl": trn_file, "data_info": trn_raw_file, 
+                                            "lbl_info": lbl_raw_file}
+            del cfg["data"]["path"]["test"]["lbl_info"]
     return cfg
     
 
