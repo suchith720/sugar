@@ -1,5 +1,8 @@
 import os, pandas as pd, scipy.sparse as sp, numpy as np, json
 from typing import Optional
+from tqdm.auto import tqdm
+
+from xcai.misc import BEIR_DATASETS
 
 def load_data(data_dir:str, dtype:str):
     short_hand = {"simple-query": "sq", "multihop-query": "mq"}
@@ -64,23 +67,23 @@ def save_examples(lbl_file:str, save_dir:str, dtype:str, example_dir:str, seed:O
     os.makedirs(example_dir, exist_ok=True)
 
     # label examples
-    save_file = f"{example_dir}/01_document-substring.json"
+    save_file = f"{example_dir}/01_document-substring_{dtype}.json"
     get_lbl_examples(labels, lbl_sub, sub_info, sub_phs, phs_info, save_file)
 
     # query examples
-    save_file = f"{example_dir}/02_query-substring.json"
+    save_file = f"{example_dir}/02_query-substring_{dtype}.json"
     get_qry_examples(data_sub, data_info, sub_info, data_der, der_info, save_file)
 
 
 if __name__ == "__main__":
-    dataset = "webis-touche2020"
     data_dir = "/data/datasets/beir/"
-    
-    dtype = "simple-query"
-    lbl_file = f"{data_dir}/{dataset}/XC/raw_data/label.raw.csv"
-    save_dir = f"{data_dir}/{dataset}/XC/document_substring/"
 
-    example_dir = f"{data_dir}/{dataset}/XC/examples/"
-    save_examples(lbl_file, save_dir, dtype, example_dir, seed=100)
+    for dataset in tqdm(BEIR_DATASETS):
+        for dtype in ["simple-query", "multihop-query"]:
+            lbl_file = f"{data_dir}/{dataset}/XC/raw_data/label.raw.csv"
+            save_dir = f"{data_dir}/{dataset}/XC/document_substring/"
+
+            example_dir = f"{data_dir}/{dataset}/XC/examples/"
+            save_examples(lbl_file, save_dir, dtype, example_dir, seed=100)
 
 

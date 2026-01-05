@@ -5,26 +5,29 @@ __all__ = ['load_gpt_outputs', 'get_label_metadata', 'get_label_substring_metada
            'is_valid_output', 'convert_string_to_objects', 'save_data', 'proc_dataset', 'main']
 
 # %% ../nbs/26_beir-substring-metadata.ipynb 2
-import os, json, pandas as pd, ast, scipy.sparse as sp, json_repair, numpy as np, re
+import os, json, pandas as pd, ast, scipy.sparse as sp, json_repair, numpy as np, re, csv
 
 from tqdm.auto import tqdm
 from typing import Optional, Dict, List
 
-DATASETS = [
-    "arguana",
-    "msmarco",
+HEAD_DATASETS = [
     "climate-fever",
     "dbpedia-entity",
+    "msmarco",
     "fever",
-    "fiqa",
     "hotpotqa",
-    "nfcorpus",
     "nq",
-    "quora",
-    "scidocs",
-    "scifact",
-    "webis-touche2020",
-    "trec-covid",
+]
+
+TAIL_DATASETS = [
+    # "arguana",
+    # "fiqa",
+    # "nfcorpus",
+    # "quora",
+    # "scidocs",
+    # "scifact",
+    # "webis-touche2020",
+    # "trec-covid",
     "cqadupstack/android",
     "cqadupstack/english",
     "cqadupstack/gaming",
@@ -267,15 +270,16 @@ def convert_string_to_objects(outputs:Dict):
 def save_data(save_dir:str, dtype:str, data_sub:sp.csr_matrix, data_info:pd.DataFrame, sub_info:pd.DataFrame, 
               lbl_sub:sp.csr_matrix, sub_phs:sp.csr_matrix, phs_info:pd.DataFrame, data_der:sp.csr_matrix, 
               der_info:pd.DataFrame):
+
     os.makedirs(f"{save_dir}/raw_data/", exist_ok=True)
     short_hand = {"simple-query": "sq", "multihop-query": "mq"}
 
     assert dtype in short_hand, f"Invalid data-type: {dtype}."
 
-    data_info.to_csv(f"{save_dir}/raw_data/{dtype}.raw.csv", index=False)
-    sub_info.to_csv(f"{save_dir}/raw_data/{short_hand[dtype]}-substring.raw.csv", index=False)
+    data_info.to_csv(f"{save_dir}/raw_data/{dtype}.raw.csv", index=False, quoting=csv.QUOTE_ALL, escapechar="\\")
+    sub_info.to_csv(f"{save_dir}/raw_data/{short_hand[dtype]}-substring.raw.csv", index=False, quoting=csv.QUOTE_ALL, escapechar="\\")
     
-    der_info.to_csv(f"{save_dir}/raw_data/{short_hand[dtype]}-derived-queries.raw.csv", index=False)
+    der_info.to_csv(f"{save_dir}/raw_data/{short_hand[dtype]}-derived-queries.raw.csv", index=False, quoting=csv.QUOTE_ALL, escapechar="\\")
 
     sp.save_npz(f"{save_dir}/{dtype}_{short_hand[dtype]}-substring.npz", data_sub)
     sp.save_npz(f"{save_dir}/{dtype}_{short_hand[dtype]}-derived-queries.npz", data_der)
@@ -286,18 +290,23 @@ def save_data(save_dir:str, dtype:str, data_sub:sp.csr_matrix, data_info:pd.Data
     sp.save_npz(f"{save_dir}/lbl_{short_hand[dtype]}-substring.npz", lbl_sub)
     sp.save_npz(f"{save_dir}/{short_hand[dtype]}-substring_{short_hand[dtype]}-derived-phrases.npz", sub_phs)
 
-    phs_info.to_csv(f"{save_dir}/raw_data/{short_hand[dtype]}-substring_{short_hand[dtype]}-derived-phrases.raw.csv", index=False)
+    phs_info.to_csv(f"{save_dir}/raw_data/{short_hand[dtype]}-substring_{short_hand[dtype]}-derived-phrases.raw.csv", index=False, 
+                    quoting=csv.QUOTE_ALL, escapechar="\\")
     
 
 # %% ../nbs/26_beir-substring-metadata.ipynb 12
 def proc_dataset(dataset:str, lbl_dir:str, data_dir:str, save_dir:Optional[str]=None):
+
     lbl_file = f"{lbl_dir}/{dataset}/XC/raw_data/label.raw.csv"
-    labels = pd.read_csv(lbl_file)
+    labels = pd.read_csv(lbl_file,  dtype={"identifier":str, "text":str})
 
-    for dtype in ["multihop"]:
-        print(f"Processing {dtype} queries ...")
+    for dtype in ["simple", "multihop"]:
+        print(f"Processing {dtype} queries ...", end="\n\n")
 
-        outputs = load_gpt_outputs(f"{data_dir}/{dataset}_{dtype}_label.jsonl")
+        outputs = load_gpt_outputs(f"{data_dir}/{dataset.replace('/', '-')}_{dtype}_label.jsonl")
+
+        keys = set(outputs.keys()).intersection(set(labels["identifier"].tolist()))
+        assert len(keys)/labels.shape[0] > 0.9, "There are a lot of missing identifiers in the generated output."
         
         outputs = convert_string_to_objects(outputs)
         outputs = get_label_metadata(outputs, labels)
@@ -311,17 +320,23 @@ def proc_dataset(dataset:str, lbl_dir:str, data_dir:str, save_dir:Optional[str]=
         
 
 # %% ../nbs/26_beir-substring-metadata.ipynb 13
-def main(lbl_dir:str, data_dir:str, save_dir:Optional[str]=None):
-    for dataset in tqdm(DATASETS):
+def main(lbl_dir:str, data_dir:str, datasets:List, save_dir:Optional[str]=None):
+    for dataset in tqdm(datasets):
         print(dataset)
         print("=" * 50, end="\n\n")
+
         proc_dataset(dataset, lbl_dir, data_dir, save_dir)
+
         print("=" * 50, end="\n\n")
+
 
 # %% ../nbs/26_beir-substring-metadata.ipynb 14
 if __name__ == "__main__":
     lbl_dir = "/data/datasets/beir/"
-    data_dir = "/data/share/from_tanmay/tail_beir/"
 
-    main(lbl_dir, data_dir)
+    data_dir = "/data/share/from_tanmay/tail_beir/"
+    main(lbl_dir, data_dir, TAIL_DATASETS)
+
+    data_dir = "/data/share/from_tanmay/head_beir/"
+    main(lbl_dir, data_dir, HEAD_DATASETS)
     
