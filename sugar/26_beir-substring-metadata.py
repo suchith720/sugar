@@ -28,18 +28,18 @@ TAIL_DATASETS = [
     # "scifact",
     # "webis-touche2020",
     # "trec-covid",
-    "cqadupstack/android",
-    "cqadupstack/english",
-    "cqadupstack/gaming",
-    "cqadupstack/gis",
-    "cqadupstack/mathematica",
-    "cqadupstack/physics",
-    "cqadupstack/programmers",
-    "cqadupstack/stats",
-    "cqadupstack/tex",
-    "cqadupstack/unix",
-    "cqadupstack/webmasters",
-    "cqadupstack/wordpress"
+    # "cqadupstack/android",
+    # "cqadupstack/english",
+    # "cqadupstack/gaming",
+    # "cqadupstack/gis",
+    # "cqadupstack/mathematica",
+    # "cqadupstack/physics",
+    # "cqadupstack/programmers",
+    # "cqadupstack/stats",
+    # "cqadupstack/tex",
+    # "cqadupstack/unix",
+    # "cqadupstack/webmasters",
+    # "cqadupstack/wordpress"
 ]
 
 # %% ../nbs/26_beir-substring-metadata.ipynb 4
@@ -64,7 +64,17 @@ def get_label_substring_metadata(outputs:Dict):
     def get_derived_key(o):
         key = None
         for k in o.keys():
-            if "derived_phrases" in k: key = k
+            if "derived_phrases" in k: 
+                key = k
+                break
+        return key
+
+    def get_original_key(o):
+        key = None
+        for k in o.keys():
+            if "original" in k or "substring" in k:
+                key = k
+                break
         return key
     
     phrases = dict()
@@ -72,7 +82,8 @@ def get_label_substring_metadata(outputs:Dict):
     for output in tqdm(outputs):
         for o in output.get("substring", []):
             if len(o):
-                idx = vocab.setdefault(o["original_substring"], len(vocab))
+                original_key = get_original_key(o)
+                idx = vocab.setdefault(str(o[original_key]), len(vocab))
                 data.append(1)
                 indices.append(idx)
 
@@ -295,7 +306,7 @@ def save_data(save_dir:str, dtype:str, data_sub:sp.csr_matrix, data_info:pd.Data
     
 
 # %% ../nbs/26_beir-substring-metadata.ipynb 12
-def proc_dataset(dataset:str, lbl_dir:str, data_dir:str, save_dir:Optional[str]=None):
+def proc_dataset(dataset:str, lbl_dir:str, data_dir:str, dset_type:str, save_dir:Optional[str]=None):
 
     lbl_file = f"{lbl_dir}/{dataset}/XC/raw_data/label.raw.csv"
     labels = pd.read_csv(lbl_file,  dtype={"identifier":str, "text":str})
@@ -303,10 +314,19 @@ def proc_dataset(dataset:str, lbl_dir:str, data_dir:str, save_dir:Optional[str]=
     for dtype in ["simple", "multihop"]:
         print(f"Processing {dtype} queries ...", end="\n\n")
 
-        outputs = load_gpt_outputs(f"{data_dir}/{dataset.replace('/', '-')}_{dtype}_label.jsonl")
+        out_file = f"{data_dir}/{dataset.replace('/', '-')}_{dtype}_label.jsonl"
+        assert os.path.exists(out_file), f"File not found: {out_file}"
+
+        outputs = load_gpt_outputs(out_file)
 
         keys = set(outputs.keys()).intersection(set(labels["identifier"].tolist()))
-        assert len(keys)/labels.shape[0] > 0.9, "There are a lot of missing identifiers in the generated output."
+
+        if dset_type == "tail":
+            assert len(keys)/labels.shape[0] > 0.9, "There are a lot of missing identifiers in the generated output."
+        elif dset_type == "head":
+            assert len(keys) > 80_000, "There are a lot of missing identifiers in the generated output."
+        else:
+            raise ValueError(f"Invalid dataset type: {dset_type}")
         
         outputs = convert_string_to_objects(outputs)
         outputs = get_label_metadata(outputs, labels)
@@ -320,12 +340,12 @@ def proc_dataset(dataset:str, lbl_dir:str, data_dir:str, save_dir:Optional[str]=
         
 
 # %% ../nbs/26_beir-substring-metadata.ipynb 13
-def main(lbl_dir:str, data_dir:str, datasets:List, save_dir:Optional[str]=None):
+def main(lbl_dir:str, data_dir:str, datasets:List, dset_type:str, save_dir:Optional[str]=None):
     for dataset in tqdm(datasets):
         print(dataset)
         print("=" * 50, end="\n\n")
 
-        proc_dataset(dataset, lbl_dir, data_dir, save_dir)
+        proc_dataset(dataset, lbl_dir, data_dir, dset_type, save_dir)
 
         print("=" * 50, end="\n\n")
 
@@ -335,8 +355,8 @@ if __name__ == "__main__":
     lbl_dir = "/data/datasets/beir/"
 
     data_dir = "/data/share/from_tanmay/tail_beir/"
-    main(lbl_dir, data_dir, TAIL_DATASETS)
+    main(lbl_dir, data_dir, TAIL_DATASETS, "tail")
 
     data_dir = "/data/share/from_tanmay/head_beir/"
-    main(lbl_dir, data_dir, HEAD_DATASETS)
+    main(lbl_dir, data_dir, HEAD_DATASETS, "head")
     

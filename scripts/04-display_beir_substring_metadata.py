@@ -40,6 +40,8 @@ def get_lbl_examples(labels:pd.DataFrame, lbl_sub:sp.csr_matrix, sub_info:pd.Dat
     with open(save_file, "w") as file:
         json.dump(lbl_examples, file, indent=4)
 
+    return lbl_examples
+
 
 def get_qry_examples(data_sub:sp.csr_matrix, data_info:pd.DataFrame, sub_info:pd.DataFrame, data_der:sp.csr_matrix, der_info:pd.DataFrame, save_file:str):
     qry_examples = []
@@ -57,6 +59,8 @@ def get_qry_examples(data_sub:sp.csr_matrix, data_info:pd.DataFrame, sub_info:pd
     with open(save_file, "w") as file:
         json.dump(qry_examples, file, indent=4)
 
+    return qry_examples
+
 
 def save_examples(lbl_file:str, save_dir:str, dtype:str, example_dir:str, seed:Optional[int]=100):
     np.random.seed(seed)
@@ -68,22 +72,39 @@ def save_examples(lbl_file:str, save_dir:str, dtype:str, example_dir:str, seed:O
 
     # label examples
     save_file = f"{example_dir}/01_document-substring_{dtype}.json"
-    get_lbl_examples(labels, lbl_sub, sub_info, sub_phs, phs_info, save_file)
+    lbl_examples = get_lbl_examples(labels, lbl_sub, sub_info, sub_phs, phs_info, save_file)
 
     # query examples
     save_file = f"{example_dir}/02_query-substring_{dtype}.json"
-    get_qry_examples(data_sub, data_info, sub_info, data_der, der_info, save_file)
+    qry_examples = get_qry_examples(data_sub, data_info, sub_info, data_der, der_info, save_file)
+
+    return lbl_examples, qry_examples
 
 
 if __name__ == "__main__":
     data_dir = "/data/datasets/beir/"
 
+    beir_examples = []
     for dataset in tqdm(BEIR_DATASETS):
         for dtype in ["simple-query", "multihop-query"]:
             lbl_file = f"{data_dir}/{dataset}/XC/raw_data/label.raw.csv"
             save_dir = f"{data_dir}/{dataset}/XC/document_substring/"
 
             example_dir = f"{data_dir}/{dataset}/XC/examples/"
-            save_examples(lbl_file, save_dir, dtype, example_dir, seed=100)
+            lbl_examples, qry_examples = save_examples(lbl_file, save_dir, dtype, example_dir, seed=100)
+
+            beir_examples.append({
+                "dataset":dataset, 
+                "type": dtype,
+                "document":np.random.choice(lbl_examples), 
+                "query":np.random.choice(qry_examples)
+            })
+
+    save_file = "/home/aiscuser/scratch1/examples/01-beir_substring_examples.json"
+    os.makedirs("/home/aiscuser/scratch1/examples/", exist_ok=True)
+    with open(save_file, "w") as file:
+        json.dump(beir_examples, file, indent=4)
+
+
 
 
