@@ -6,12 +6,12 @@ __all__ = ['convert_df_to_outputs', 'save_raw', 'load_raw', 'get_substring_matri
            'save_substring']
 
 # %% ../nbs/25_msmarco-substring.ipynb 2
-import pandas as pd, ast, numpy as np, os
+import pandas as pd, ast, numpy as np, os, json
 from typing import Optional, List, Dict
 from tqdm.auto import tqdm
 import scipy.sparse as sp
 
-from sugar.core import *
+from .core import *
 
 # %% ../nbs/25_msmarco-substring.ipynb 4
 def convert_df_to_outputs(df):
@@ -25,7 +25,7 @@ def convert_df_to_outputs(df):
             raise ValueError(f"Error occurred while processing line {i}.")
         outputs.setdefault(str(id), {"id": id, "query": query, "document": label, "substring":[]})["substring"].extend(substring)
     return outputs
-
+    
 
 # %% ../nbs/25_msmarco-substring.ipynb 5
 def save_raw(fname:str, ids:List, txt:List):
@@ -35,12 +35,12 @@ def save_raw(fname:str, ids:List, txt:List):
 def load_raw(fname:str):
     df = pd.read_csv(fname, keep_default_na=False, na_filter=False)
     return df["identifier"].tolist(), df["text"].tolist()
-
+    
 
 # %% ../nbs/25_msmarco-substring.ipynb 6
 def get_substring_matrix_from_outputs(outputs:Dict, ids:List, vocab:Optional[Dict]=None):
     if vocab is None: vocab = dict()
-
+        
     data, indices, indptr = [], [], [0]
     for i in tqdm(ids, total=len(ids)):
         for c in outputs[i]["substring"]:
@@ -50,7 +50,7 @@ def get_substring_matrix_from_outputs(outputs:Dict, ids:List, vocab:Optional[Dic
         indptr.append(len(indices))
 
     return sp.csr_matrix((data, indices, indptr), dtype=np.float32)
-
+    
 
 # %% ../nbs/25_msmarco-substring.ipynb 7
 def get_substring_info(outputs:Dict, meta_name:str):
@@ -61,7 +61,7 @@ def get_substring_info(outputs:Dict, meta_name:str):
             meta_idx = [all_meta.setdefault(p, len(all_meta)) for p in metas]
             substr2meta.setdefault(substr, []).extend(meta_idx)
     return all_meta, substr2meta
-
+    
 
 # %% ../nbs/25_msmarco-substring.ipynb 8
 def get_matrix_from_mapping(mapping:Dict, ids:List):
@@ -72,32 +72,32 @@ def get_matrix_from_mapping(mapping:Dict, ids:List):
         data.extend([1] * len(idx))
         indptr.append(len(data))
     return sp.csr_matrix((data, indices, indptr), dtype=np.float32)
-
+    
 
 # %% ../nbs/25_msmarco-substring.ipynb 9
 def extract_and_save_substring_metadata(outputs:Dict, save_dir:str, meta_name:str, replace_substr_with_metadata:Optional[bool]=False):
     # extract metadata
     all_metas, substr2meta = get_substring_info(outputs, meta_name)
     print(f"Total metadata: {len(all_metas)}")
-
+    
     substr_ids, substr_txt = load_raw(f"{save_dir}/raw_data/substring.raw.csv")
     all_substr_ids, all_substr_txt = load_raw(f"{save_dir}/raw_data/all-substring.raw.csv")
-
+    
     substr_meta = get_matrix_from_mapping(substr2meta, all_substr_txt)
 
     # save metadata
     meta_txt = sorted(all_metas, key=lambda x: all_metas[x])
     meta_ids = list(range(len(meta_txt)))
-
+    
     n_trn_substr = len(substr_txt)
-
+    
     substr_meta.sum_duplicates()
     substr_meta.sort_indices()
 
     meta_name = meta_name.replace("_", "-")
     sp.save_npz(f"{save_dir}/{meta_name}_substring_X_Y.npz", substr_meta[:n_trn_substr])
     sp.save_npz(f"{save_dir}/{meta_name}_all-substring_X_Y.npz", substr_meta)
-
+    
     save_raw(f"{save_dir}/raw_data/substring_{meta_name}.raw.csv", meta_ids, meta_txt)
 
     if replace_substr_with_metadata:
@@ -106,13 +106,13 @@ def extract_and_save_substring_metadata(outputs:Dict, save_dir:str, meta_name:st
 
         save_raw(f"{save_dir}/raw_data/substring-{meta_name}.raw.csv", substr_meta_ids[:n_trn_substr], substr_meta_txt[:n_trn_substr])
         save_raw(f"{save_dir}/raw_data/all-substring-{meta_name}.raw.csv", substr_meta_ids, substr_meta_txt)
-
+    
 
 # %% ../nbs/25_msmarco-substring.ipynb 10
 def get_intent_matrix_from_outputs(outputs:Dict, ids:List, vocab:Optional[Dict]=None):
     np.random.seed(1000)
     if vocab is None: vocab = dict()
-
+        
     data, indices, indptr = [], [], [0]
     for i in tqdm(ids, total=len(ids)):
         for c in outputs[i]["substring"]:
@@ -123,58 +123,58 @@ def get_intent_matrix_from_outputs(outputs:Dict, ids:List, vocab:Optional[Dict]=
         indptr.append(len(indices))
 
     return sp.csr_matrix((data, indices, indptr), dtype=np.float32)
-
+    
 
 # %% ../nbs/25_msmarco-substring.ipynb 11
-def save_substring(trn_substr:sp.csr_matrix, tst_substr:sp.csr_matrix, all_substr:Dict,
+def save_substring(trn_substr:sp.csr_matrix, tst_substr:sp.csr_matrix, all_substr:Dict, 
                    save_dir:str, substr_name:str):
     n_trn_substr = trn_substr.shape[1]
     nnz = tst_substr[:, :n_trn_substr].getnnz(axis=1)
     print(f"% of training {substr_name} in test: {np.where(nnz != 0)[0].shape[0]/tst_substr.shape[0]:.4f}")
-
+    
     trn_substr.sum_duplicates()
     trn_substr.sort_indices()
-
+    
     tst_substr.sum_duplicates()
     tst_substr.sort_indices()
 
     # save substrings
     all_substr_txt = sorted(all_substr, key=lambda x: all_substr[x])
     all_substr_ids = list(range(len(all_substr)))
-
+    
     os.makedirs(save_dir, exist_ok=True)
     n_trn_substr = trn_substr.shape[1]
-
+    
     sp.save_npz(f"{save_dir}/{substr_name}_trn_X_Y.npz", trn_substr)
     sp.save_npz(f"{save_dir}/{substr_name}_tst_X_Y.npz", tst_substr[:, :n_trn_substr])
     sp.save_npz(f"{save_dir}/all-{substr_name}_tst_X_Y.npz", tst_substr)
-
+    
     os.makedirs(f"{save_dir}/raw_data/", exist_ok=True)
     save_raw(f"{save_dir}/raw_data/{substr_name}.raw.csv", all_substr_ids[:n_trn_substr], all_substr_txt[:n_trn_substr])
     save_raw(f"{save_dir}/raw_data/all-{substr_name}.raw.csv", all_substr_ids, all_substr_txt)
-
+    
 
 # %% ../nbs/25_msmarco-substring.ipynb 83
 if __name__ == "__main__":
     # arguements
-    meta_name = "narrow_substring"
+    meta_name = "intent_substring"
     raw_dir = "/Users/suchith720/Desktop/Projects/mogicX/"
     save_dir = f"/Users/suchith720/Projects/data/beir/msmarco/XC/{meta_name}/"
-
+    
     # load raw data
     data_dir = "/Users/suchith720/Projects/data/beir/msmarco/XC"
     trn_ids, trn_txt = load_raw_file(f"{data_dir}/raw_data/train.raw.txt")
     tst_ids, tst_txt = load_raw_file(f"{data_dir}/raw_data/test.raw.txt")
-
+    
     df = pd.read_csv(f"{raw_dir}/data/gpt_substring/{meta_name}/msmarco_{meta_name}.csv")
     outputs = convert_df_to_outputs(df)
-
+    
     # extract substrings
     all_substr = dict()
-
+    
     trn_substr = get_substring_matrix_from_outputs(outputs, trn_ids, all_substr)
     print(f"Total train substrings: {len(all_substr)}")
-
+    
     tst_substr = get_substring_matrix_from_outputs(outputs, tst_ids, all_substr)
     print(f"Total test substrings: {len(all_substr)}")
 
@@ -186,14 +186,14 @@ if __name__ == "__main__":
     output_keys = set(outputs[next(iter(outputs))]["substring"][0].keys())
     if "intent_phrases" in output_keys:
         all_intent = dict()
-
+        
         trn_intent = get_intent_matrix_from_outputs(outputs, trn_ids, all_intent)
         print(f"Total train intents: {len(all_intent)}")
-
+        
         tst_intent = get_intent_matrix_from_outputs(outputs, tst_ids, all_intent)
         print(f"Total test intents: {len(all_intent)}")
 
         save_substring(trn_intent, tst_intent, all_intent, save_dir, "intent")
-
+        
         extract_and_save_substring_metadata(outputs, save_dir, "intent_phrases", replace_substr_with_metadata=True)
 
