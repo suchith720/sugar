@@ -9,7 +9,35 @@ import os, json, pandas as pd, ast, scipy.sparse as sp, json_repair, numpy as np
 
 from tqdm.auto import tqdm
 from typing import Optional, Dict, List
-from xcai.misc import BEIR_DATASETS
+
+DATASETS = [
+    "arguana",
+    "msmarco",
+    "climate-fever",
+    "dbpedia-entity",
+    "fever",
+    "fiqa",
+    "hotpotqa",
+    "nfcorpus",
+    "nq",
+    "quora",
+    "scidocs",
+    "scifact",
+    "webis-touche2020",
+    "trec-covid",
+    "cqadupstack/android",
+    "cqadupstack/english",
+    "cqadupstack/gaming",
+    "cqadupstack/gis",
+    "cqadupstack/mathematica",
+    "cqadupstack/physics",
+    "cqadupstack/programmers",
+    "cqadupstack/stats",
+    "cqadupstack/tex",
+    "cqadupstack/unix",
+    "cqadupstack/webmasters",
+    "cqadupstack/wordpress"
+]
 
 # %% ../nbs/26_beir-substring-metadata.ipynb 4
 def load_gpt_outputs(fname:str):
@@ -29,6 +57,12 @@ def get_label_metadata(outputs:Dict, labels:pd.DataFrame):
 # %% ../nbs/26_beir-substring-metadata.ipynb 6
 def get_label_substring_metadata(outputs:Dict):
     # substring metadata
+
+    def get_derived_key(o):
+        key = None
+        for k in o.keys():
+            if "derived_phrases" in k: key = k
+        return key
     
     phrases = dict()
     vocab, data, indices, indptr = dict(), [], [], [0]
@@ -38,8 +72,12 @@ def get_label_substring_metadata(outputs:Dict):
                 idx = vocab.setdefault(o["original_substring"], len(vocab))
                 data.append(1)
                 indices.append(idx)
-                assert np.all([type(i) == str for i in o["derived_phrases"]]), '"derived_phrases" should be list of string'
-                phrases.setdefault(idx, []).extend(o["derived_phrases"])
+
+                derived_key = get_derived_key(o)
+                if derived_key is not None:
+                    assert np.all([type(i) == str for i in o[derived_key]]), '"derived_phrases" should be list of string'
+                    phrases.setdefault(idx, []).extend(o[derived_key])
+
         indptr.append(len(data))
         
     lbl_sub = sp.csr_matrix((data, indices, indptr))
@@ -49,7 +87,7 @@ def get_label_substring_metadata(outputs:Dict):
     
     vocab, data, indices, indptr = dict(), [], [], [0]
     for i in range(sub_info.shape[0]):
-        for p in phrases[i]:
+        for p in phrases.get(i, []):
             idx = vocab.setdefault(p, len(vocab))
             data.append(1)
             indices.append(idx)
@@ -211,13 +249,16 @@ def convert_string_to_objects(outputs:Dict):
                             v = "\n".join(lines)
                             break
                     else:
-                        raise ValueError(f"Keyword error: {k}")
+                        n_invalid += 1
+                        break
                         
             else:
                 out[k] = o
                 error_flag = False
 
-    if n_invalid > 0: print(f"Invalid outputs: {n_invalid/len(outputs):.4f}")
+    if n_invalid > 0: 
+        print(f"Number of invalid outputs: {n_invalid}")
+        print(f"Invalid outputs: {n_invalid/len(outputs):.4f}")
         
     return out
     
@@ -253,7 +294,9 @@ def proc_dataset(dataset:str, lbl_dir:str, data_dir:str, save_dir:Optional[str]=
     lbl_file = f"{lbl_dir}/{dataset}/XC/raw_data/label.raw.csv"
     labels = pd.read_csv(lbl_file)
 
-    for dtype in ["simple", "multihop"]:
+    for dtype in ["multihop"]:
+        print(f"Processing {dtype} queries ...")
+
         outputs = load_gpt_outputs(f"{data_dir}/{dataset}_{dtype}_label.jsonl")
         
         outputs = convert_string_to_objects(outputs)
@@ -269,13 +312,16 @@ def proc_dataset(dataset:str, lbl_dir:str, data_dir:str, save_dir:Optional[str]=
 
 # %% ../nbs/26_beir-substring-metadata.ipynb 13
 def main(lbl_dir:str, data_dir:str, save_dir:Optional[str]=None):
-    for dataset in tqdm(BEIR_DATASETS):
+    for dataset in tqdm(DATASETS):
+        print(dataset)
+        print("=" * 50, end="\n\n")
         proc_dataset(dataset, lbl_dir, data_dir, save_dir)
-    
+        print("=" * 50, end="\n\n")
 
 # %% ../nbs/26_beir-substring-metadata.ipynb 14
 if __name__ == "__main__":
-    lbl_dir = "/Users/suchith720/Projects/data/beir/"
-    data_dir = "/Users/suchith720/Downloads/"
+    lbl_dir = "/data/datasets/beir/"
+    data_dir = "/data/share/from_tanmay/tail_beir/"
+
     main(lbl_dir, data_dir)
     
