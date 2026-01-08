@@ -11,10 +11,10 @@ from tqdm.auto import tqdm
 from typing import Optional, Dict, List
 
 HEAD_DATASETS = [
-    "climate-fever",
-    "dbpedia-entity",
-    "msmarco",
-    "fever",
+    # "climate-fever",
+    # "dbpedia-entity",
+    # "msmarco",
+    # "fever",
     "hotpotqa",
     "nq",
 ]
@@ -116,6 +116,14 @@ def get_label_substring_metadata(outputs:Dict):
 # %% ../nbs/26_beir-substring-metadata.ipynb 7
 def get_query_substring_metadata(outputs:Dict, sub_info:pd.DataFrame):
     sub_vocab = {v:i for i,(k,v) in sub_info.iterrows()}
+
+    def get_answer_key(o):
+        key = None
+        for k in o.keys():
+            if "answer" in k.lower(): 
+                key = k
+                break
+        return key
     
     # query-substring
     
@@ -124,11 +132,14 @@ def get_query_substring_metadata(outputs:Dict, sub_info:pd.DataFrame):
     for output in tqdm(outputs):
         for i,o in enumerate(output.get("queries", [])):
             query.append(o["primary_query"])
-            idxs = [sub_vocab.setdefault(a, len(sub_vocab)) for a in o["answer"]]
+
+            answer_key = get_answer_key(o)
+            idxs = [sub_vocab.setdefault(a, len(sub_vocab)) for a in o[answer_key]]
+
             data.extend([1] * len(idxs))
             indices.extend(idxs)
             indptr.append(len(data))
-            derived_queries.append(o["derived_queries"])
+            derived_queries.append(o.get("derived_queries", []))
             
     data_sub = sp.csr_matrix((data, indices, indptr))
     data_info = pd.DataFrame([(k,v) for k,v in enumerate(query)], columns=["identifier", "text"])

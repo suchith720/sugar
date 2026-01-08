@@ -2,7 +2,34 @@ import os, pandas as pd, scipy.sparse as sp, numpy as np, json
 from typing import Optional
 from tqdm.auto import tqdm
 
-from xcai.misc import BEIR_DATASETS
+DATASETS = [
+    "arguana",
+    "msmarco",
+    "climate-fever",
+    "dbpedia-entity",
+    "fever",
+    "fiqa",
+    "hotpotqa",
+    "nfcorpus",
+    "nq",
+    # "quora",
+    "scidocs",
+    "scifact",
+    "webis-touche2020",
+    "trec-covid",
+    "cqadupstack/android",
+    "cqadupstack/english",
+    "cqadupstack/gaming",
+    # "cqadupstack/gis",
+    "cqadupstack/mathematica",
+    "cqadupstack/physics",
+    "cqadupstack/programmers",
+    "cqadupstack/stats",
+    "cqadupstack/tex",
+    "cqadupstack/unix",
+    "cqadupstack/webmasters",
+    "cqadupstack/wordpress"
+]
 
 def load_data(data_dir:str, dtype:str):
     short_hand = {"simple-query": "sq", "multihop-query": "mq"}
@@ -50,9 +77,9 @@ def get_qry_examples(data_sub:sp.csr_matrix, data_info:pd.DataFrame, sub_info:pd
         derived = [der_info["text"].iloc[i] for i in data_der[idx].indices]
 
         example = {
-            "Document": data_info["text"].iloc[idx],
+            "Query": data_info["text"].iloc[idx],
             "Substring": substrings,
-            "Derived": derived,
+            "Derived queries": derived,
         }
         qry_examples.append(example)
 
@@ -85,7 +112,7 @@ if __name__ == "__main__":
     data_dir = "/data/datasets/beir/"
 
     beir_examples = []
-    for dataset in tqdm(BEIR_DATASETS):
+    for dataset in tqdm(DATASETS):
         for dtype in ["simple-query", "multihop-query"]:
             lbl_file = f"{data_dir}/{dataset}/XC/raw_data/label.raw.csv"
             save_dir = f"{data_dir}/{dataset}/XC/document_substring/"
@@ -94,10 +121,10 @@ if __name__ == "__main__":
             lbl_examples, qry_examples = save_examples(lbl_file, save_dir, dtype, example_dir, seed=100)
 
             beir_examples.append({
-                "dataset":dataset, 
-                "type": dtype,
-                "document":np.random.choice(lbl_examples), 
-                "query":np.random.choice(qry_examples)
+                "Dataset":dataset, 
+                "Type": dtype,
+                "Document metadata":np.random.choice(lbl_examples), 
+                "Query metadata":np.random.choice(qry_examples)
             })
 
     save_file = "/home/aiscuser/scratch1/examples/01-beir_substring_examples.json"
