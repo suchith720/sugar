@@ -212,8 +212,6 @@ def save_intent_metadata(save_dir:str, intent_phrase:sp.csr_matrix, phrase_vocab
 
 # %% ../nbs/27_msmarco-intent-substring.ipynb 57
 if __name__ == "__main__":
-    input_args = parse_args()
-    
     # files
     data_dir = "/Users/suchith720/Projects/data/beir/msmarco/XC"
     intent_file = "/Users/suchith720/Desktop/Projects/mogicX/data/gpt_substring/intent_substring/msmarco_intent_substring.csv"
