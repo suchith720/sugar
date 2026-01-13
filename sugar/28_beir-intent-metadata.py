@@ -111,10 +111,6 @@ def get_metadata_matrix_from_label_dict(outputs:Dict, lbl_ids:List, seed:Optiona
             lbl_mat["indices"].append(idx)
             lbl_mat["data"].append(1.0)
 
-            if idx == 2955:
-                print(idx)
-                import pdb; pdb.set_trace()
-                
             intent_info["phrases"].setdefault(idx, []).extend(gen["derived_phrases"])
             intent_info["intents"].setdefault(idx, []).extend(gen["intent_phrases"])
             intent_info["substr"].setdefault(idx, []).append(gen[get_original_substring_key(gen)])
