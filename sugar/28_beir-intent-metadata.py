@@ -270,6 +270,8 @@ if __name__ == "__main__":
     output_dir = "/Users/suchith720/Downloads/"
 
     for dataset in tqdm(BEIR_DATASETS):
+        print(dataset)
+        
         data_dir = f"/Users/suchith720/Projects/data/beir/{dataset}/XC/"
         lbl_ids, lbl_txt = load_raw_file(f"{data_dir}/raw_data/label.raw.txt")
 
