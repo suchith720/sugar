@@ -25,9 +25,17 @@ def load_raw(fname:str):
     
 
 # %% ../nbs/28_beir-intent-metadata.ipynb 6
-def combine_df(dirname:str, dtype:str):
+def combine_head_df(dirname:str, dtype:str):
     assert dtype in ["single", "multihop"]
     return pd.concat([pd.read_table(f"{dirname}/{fname}") for fname in os.listdir(dirname) if dtype in fname])
+
+
+def combine_tail_df(dirname:str, dtype:str):
+    folders = [o for o in os.listdir(dirname) if dtype in o]
+    assert len(folders) == 1, folders
+
+    dirname = f"{dirname}/{folders[0]}"
+    return pd.concat([pd.read_table(f"{dirname}/{fname}") for fname in os.listdir(dirname)])
     
 
 # %% ../nbs/28_beir-intent-metadata.ipynb 7
@@ -110,7 +118,8 @@ def get_metadata_matrix_from_label_dict(outputs:Dict, lbl_ids:List, seed:Optiona
         if not isinstance(generations, dict): continue
         
         for gen in generations.get("substring", []):
-            if "intent_phrases" not in gen: continue
+            if "intent_phrases" not in gen or len(gen["intent_phrases"]) == 0 or not isinstance(gen["intent_phrases"], list): 
+                continue
 
             intent = str(np.random.choice(gen["intent_phrases"]))
             substr2intent[gen[get_original_substring_key(gen)]] = intent
@@ -168,8 +177,8 @@ def get_matrix_from_dict(metadata:Dict, ids:List):
     
 
 # %% ../nbs/28_beir-intent-metadata.ipynb 13
-def extract_metadata(dirname:str, dtype:str, lbl_ids:List):
-    df = combine_df(dirname, dtype)
+def extract_metadata(dirname:str, dtype:str, lbl_ids:List, dset_type:str):
+    df = combine_head_df(dirname, dtype) if dset_type == "head" else combine_tail_df(dirname, dtype)
     
     outputs = convert_df_into_label_dict(df)
 
@@ -275,7 +284,7 @@ HEAD_DATASETS = [
     # "msmarco",
     # "climate-fever",
     # "dbpedia-entity",
-    "fever",
+    # "fever",
     "hotpotqa",
     "nq",
 ]
@@ -306,18 +315,22 @@ TAIL_DATASETS = [
 
 # %% ../nbs/28_beir-intent-metadata.ipynb 19
 if __name__ == "__main__":
-    datasets = ["msmarco"]
-    output_dir = "/data/share/from_manish/head_datasets/"
+    dset_type = "tail"
 
-    for dataset in tqdm(HEAD_DATASETS):
+    output_dir = f"/data/share/from_manish/{dset_type}_datasets/"
+    datasets = HEAD_DATASETS if dset_type == "head" else TAIL_DATASETS
+    dtypes = ["single", "multihop"] if dset_type == "head" else ["simple", "multihop"]
+
+    for dataset in tqdm(datasets):
         data_dir = f"/data/datasets/beir/{dataset}/XC/"
         lbl_ids, lbl_txt = load_raw_file(f"{data_dir}/raw_data/label.raw.csv")
+        lbl_ids = list(map(str, lbl_ids))
 
         dirname = f"{output_dir}/{dataset}"
-        for dtype in ["single", "multihop"]:
+        for dtype in dtypes:
             print(f"{dataset}:{dtype}")
 
-            o = extract_metadata(dirname, dtype, lbl_ids)
+            o = extract_metadata(dirname, dtype, lbl_ids, dset_type)
             (intent_ids, intent_txt, lbl_intent), (qry_ids, qry_txt, qry_intent), intent_info, lbl_info = o
     
             save_dir = f"{data_dir}/document_intent_substring/{dtype}"
