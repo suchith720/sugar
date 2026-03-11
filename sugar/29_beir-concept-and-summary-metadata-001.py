@@ -167,7 +167,8 @@ def save_metadata_info(save_dir:str, str_info:Tuple):
 
 # %% ../nbs/29_beir-intent-and-summary-metadata.ipynb 33
 if __name__ == "__main__":
-    output_dir = "/home/sasokan/b-sprabhu/datasets/beir/raw_data/beir_document_concepts_and_summary/"
+    # output_dir = "/home/sasokan/b-sprabhu/datasets/beir/raw_data/beir_document_concepts_and_summary/"
+    output_dir = "/home/yprabhu/suchith/datasets/beir_concept_and_summary/"
 
     out_file = f"{output_dir}/UHRS_Task_docs.joblib"
     if os.path.exists(out_file):
@@ -181,7 +182,8 @@ if __name__ == "__main__":
     for dataset in tqdm(BEIR_DATASETS):
         print(dataset)
 
-        data_dir = f"/home/sasokan/b-sprabhu/datasets/beir/{dataset}/XC/"
+        # data_dir = f"/home/sasokan/b-sprabhu/datasets/beir/{dataset}/XC/"
+        data_dir = f"/home/yprabhu/suchith/datasets/beir/{dataset}/XC/"
         lbl_file = f"{data_dir}/raw_data/label.raw.csv"
 
         if os.path.exists(lbl_file):

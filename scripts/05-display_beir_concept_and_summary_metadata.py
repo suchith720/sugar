@@ -59,12 +59,13 @@ def save_examples(lbl_file:str, save_dir:str, example_file:str, seed:Optional[in
 
 
 if __name__ == "__main__":
-    data_dir = "/home/sasokan/b-sprabhu/datasets/beir/"
+    # data_dir = "/home/sasokan/b-sprabhu/datasets/beir/"
+    data_dir = "/home/yprabhu/suchith/datasets/beir/"
     example_dir = f"{data_dir}/examples/01_document-concept-and-summary/"
 
     os.makedirs(example_dir, exist_ok=True)
 
-    beir_examples = []
+    all_examples = []
     for dataset in tqdm(BEIR_DATASETS):
         lbl_file = f"{data_dir}/{dataset}/XC/raw_data/label.raw.csv"
         save_dir = f"{data_dir}/{dataset}/XC/document_concept_and_summary/"
@@ -74,6 +75,11 @@ if __name__ == "__main__":
         if os.path.exists(save_dir):
             example_file = f"{example_dir}/{dataset.replace('/', '-')}.json"
             lbl_examples = save_examples(lbl_file, save_dir, example_file, seed=100)
+
+            all_examples.extend([{"Document": o["Document"], "Concepts": [c["Concept"] for c in o["Concepts"]]} for o in lbl_examples])
         else:
             print(f"Directory not found: {save_dir}")
+
+    with open(f"{example_dir}/all_examples.json", "w") as file:
+        json.dump(all_examples, file, indent=4)
 
