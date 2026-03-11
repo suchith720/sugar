@@ -43,7 +43,8 @@ def convert_string_to_object(df:pd.DataFrame):
                 except:
                     out = json_repair.loads(out)
                 
-                outputs[idx] = {
+                outputs[doc] = {
+                    "identifier": idx,
                     "document": doc,
                     "concepts": out[0]["concepts"] if isinstance(out, list) else out["concepts"],
                 }
@@ -166,7 +167,7 @@ def save_metadata_info(save_dir:str, str_info:Tuple):
 
 # %% ../nbs/29_beir-intent-and-summary-metadata.ipynb 33
 if __name__ == "__main__":
-    output_dir = "/home/yprabhu/sprabhu/data/concept_substring/"
+    output_dir = "/home/sasokan/b-sprabhu/datasets/beir/raw_data/beir_document_concepts_and_summary/"
 
     out_file = f"{output_dir}/UHRS_Task_docs.joblib"
     if os.path.exists(out_file):
@@ -178,16 +179,19 @@ if __name__ == "__main__":
 
 
     for dataset in tqdm(BEIR_DATASETS):
-        data_dir = f"/home/yprabhu/sprabhu/data/beir/{dataset}/XC/"
+        print(dataset)
+
+        data_dir = f"/home/sasokan/b-sprabhu/datasets/beir/{dataset}/XC/"
         lbl_file = f"{data_dir}/raw_data/label.raw.csv"
 
         if os.path.exists(lbl_file):
-            print(dataset)
             lbl_ids, lbl_txt = load_raw_file(f"{data_dir}/raw_data/label.raw.csv")
             
-            (str_ids, str_txt, lbl_str), str_info = extract_metadata(outputs, lbl_ids)
+            (str_ids, str_txt, lbl_str), str_info = extract_metadata(outputs, lbl_txt)
             
-            save_dir = f"{data_dir}/document_concept_substring/"
+            save_dir = f"{data_dir}/document_concept_and_summary/"
             save_metadata(save_dir, str_ids, str_txt, lbl_str)
             save_metadata_info(save_dir, str_info)
+        else:
+            print(f"File not found: {lbl_file}")
             
