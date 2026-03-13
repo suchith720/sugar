@@ -147,7 +147,7 @@ def save_metadata_info(save_dir:str, str_info:Tuple):
     os.makedirs(f"{save_dir}/raw_data/", exist_ok=True)
 
     def get_raw_info(vocab):
-        txt = sorted(phrase_vocab, key=lambda x: phrase_vocab[x])
+        txt = sorted(vocab, key=lambda x: vocab[x])
         ids = list(range(len(txt)))
         return ids, txt
     
