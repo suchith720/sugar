@@ -2,7 +2,7 @@
 
 # %% auto 0
 __all__ = ['load_jsonl', 'load_json', 'load_musique_raw', 'process_musique', 'load_2wikimultihopqa_raw',
-           'process_2wikimultihopqa']
+           'process_2wikimultihopqa', 'load_morehopqa_raw', 'process_morehopqa']
 
 # %% ../nbs/30_multihop-datasets.ipynb 1
 import pandas as pd, os, json, numpy as np, scipy.sparse as sp, re
@@ -133,7 +133,55 @@ def process_2wikimultihopqa(data_dir:str, save_dir:str):
     sp.save_npz(f"{save_dir}/tst_X_Y.npz", tst_lbl)
 
     lbl_txt = sorted(vocab, key=lambda x: vocab[x])
-    lbl_txt = [f"{p} [SEP] {q}" for p,q in zip(title, lbl_txt)]
+    lbl_ids = list(range(len(lbl_txt)))
+    save_raw_file(f"{save_dir}/raw_data/label.raw.csv", lbl_ids, lbl_txt)
+
+    return (trn_ids, trn_txt, trn_lbl), (tst_ids, tst_txt, tst_lbl), (lbl_ids, lbl_txt)
+    
+
+# %% ../nbs/30_multihop-datasets.ipynb 38
+def load_morehopqa_raw(fname:str, vocab:Optional[Dict]=None):
+    raw_data = load_json(fname)
+
+    qry_ids, qry_txt = [], []
+    vocab = {} if vocab is None else vocab
+    
+    data, indices, indptr = [], [], [0]
+    
+    for o in tqdm(raw_data):
+        qry_ids.append(o["_id"])
+        qry_txt.append(o["question"])
+        
+        labels = [f"{p} [SEP] {' '.join(q)}" for p,q in o["context"]]
+        
+        for lbl in labels:
+            idx = vocab.setdefault(lbl, len(vocab))
+            data.append(1.0)
+            indices.append(idx)
+                
+        indptr.append(len(indices))
+        
+    matrix = sp.csr_matrix((data, indices, indptr), shape=(len(indptr) - 1, len(vocab)))
+    return qry_ids, qry_txt, vocab, matrix
+    
+
+# %% ../nbs/30_multihop-datasets.ipynb 39
+def process_morehopqa(data_dir:str, save_dir:str):
+    trn_ids, trn_txt, vocab, trn_lbl = load_morehopqa_raw(f"{data_dir}/without_human_verification.json")
+    
+    tst_ids, tst_txt, vocab, tst_lbl = load_morehopqa_raw(f"{data_dir}/with_human_verification.json", vocab=vocab)
+    
+    trn_lbl.resize((trn_lbl.shape[0], tst_lbl.shape[1]))
+
+    os.makedirs(f"{save_dir}/raw_data", exist_ok=True)
+
+    save_raw_file(f"{save_dir}/raw_data/train.raw.csv", trn_ids, trn_txt)
+    sp.save_npz(f"{save_dir}/trn_X_Y.npz", trn_lbl)
+
+    save_raw_file(f"{save_dir}/raw_data/test.raw.csv", tst_ids, tst_txt)
+    sp.save_npz(f"{save_dir}/tst_X_Y.npz", tst_lbl)
+
+    lbl_txt = sorted(vocab, key=lambda x: vocab[x])
     lbl_ids = list(range(len(lbl_txt)))
     save_raw_file(f"{save_dir}/raw_data/label.raw.csv", lbl_ids, lbl_txt)
 
