@@ -243,22 +243,85 @@ def process_exfever(data_dir:str, lbl_file:str, save_dir:str):
     return (trn_ids, trn_txt, trn_lbl), (tst_ids, tst_txt, tst_lbl), (lbl_ids, lbl_txt)
 
 
+# %% ../nbs/30_multihop-datasets.ipynb 38
+def load_morehopqa_raw(fname:str, vocab:Optional[Dict]=None):
+    raw_data = load_json(fname)
+
+    qry_ids, qry_txt = [], []
+    vocab = {} if vocab is None else vocab
+    
+    data, indices, indptr = [], [], [0]
+    
+    for o in tqdm(raw_data):
+        qry_ids.append(o["_id"])
+        qry_txt.append(o["question"])
+        
+        labels = [f"{p} [SEP] {' '.join(q)}" for p,q in o["context"]]
+        
+        for lbl in labels:
+            idx = vocab.setdefault(lbl, len(vocab))
+            data.append(1.0)
+            indices.append(idx)
+                
+        indptr.append(len(indices))
+        
+    matrix = sp.csr_matrix((data, indices, indptr), shape=(len(indptr) - 1, len(vocab)))
+    return qry_ids, qry_txt, vocab, matrix
+    
+
+# %% ../nbs/30_multihop-datasets.ipynb 39
+def process_morehopqa(data_dir:str, save_dir:str):
+    trn_ids, trn_txt, vocab, trn_lbl = load_morehopqa_raw(f"{data_dir}/without_human_verification.json")
+    
+    tst_ids, tst_txt, vocab, tst_lbl = load_morehopqa_raw(f"{data_dir}/with_human_verification.json", vocab=vocab)
+    
+    trn_lbl.resize((trn_lbl.shape[0], tst_lbl.shape[1]))
+
+    os.makedirs(f"{save_dir}/raw_data", exist_ok=True)
+
+    save_raw_file(f"{save_dir}/raw_data/train.raw.csv", trn_ids, trn_txt)
+    sp.save_npz(f"{save_dir}/trn_X_Y.npz", trn_lbl)
+
+    save_raw_file(f"{save_dir}/raw_data/test.raw.csv", tst_ids, tst_txt)
+    sp.save_npz(f"{save_dir}/tst_X_Y.npz", tst_lbl)
+
+    lbl_txt = sorted(vocab, key=lambda x: vocab[x])
+    lbl_ids = list(range(len(lbl_txt)))
+    save_raw_file(f"{save_dir}/raw_data/label.raw.csv", lbl_ids, lbl_txt)
+
+    return (trn_ids, trn_txt, trn_lbl), (tst_ids, tst_txt, tst_lbl), (lbl_ids, lbl_txt)
+
+
 if __name__ == "__main__":
-    # data_dir = "/home/sasokan/b-sprabhu/datasets/multihop/musique/original_data"
-    # save_dir = "/home/sasokan/b-sprabhu/datasets/multihop/musique/XC/"
-    # trn_data, tst_data, lbl_data = process_musique(data_dir, save_dir)
+    dataset = "morehopqa"
 
-    # data_dir = "/home/sasokan/b-sprabhu/datasets/multihop/2wikimultihopqa/original_data"
-    # save_dir = "/home/sasokan/b-sprabhu/datasets/multihop/2wikimultihopqa/XC/"
-    # trn_data, tst_data, lbl_data = process_2wikimultihopqa(data_dir, save_dir)
+    if dataset == "musique":
+        data_dir = "/home/sasokan/b-sprabhu/datasets/multihop/musique/original_data"
+        save_dir = "/home/sasokan/b-sprabhu/datasets/multihop/musique/XC/"
+        trn_data, tst_data, lbl_data = process_musique(data_dir, save_dir)
 
-    # data_dir = "/home/sasokan/b-sprabhu/datasets/multihop/hover/original_data/"
-    # lbl_file = "/data/datasets/beir/hotpotqa/corpus.jsonl"
-    # save_dir = "/home/sasokan/b-sprabhu/datasets/multihop/hover/XC/"
-    # trn_data, tst_data, lbl_data = process_hover(data_dir, lbl_file, save_dir)
+    elif dataset == "2wikimultihopqa":
+        data_dir = "/home/sasokan/b-sprabhu/datasets/multihop/2wikimultihopqa/original_data"
+        save_dir = "/home/sasokan/b-sprabhu/datasets/multihop/2wikimultihopqa/XC/"
+        trn_data, tst_data, lbl_data = process_2wikimultihopqa(data_dir, save_dir)
 
-    data_dir = "/home/sasokan/b-sprabhu/datasets/multihop/exfever/original_data/"
-    lbl_file = "/data/datasets/beir/fever/corpus.jsonl"
-    save_dir = "/home/sasokan/b-sprabhu/datasets/multihop/exfever/XC/"
-    trn_data, tst_data, lbl_data = process_exfever(data_dir, lbl_file, save_dir)
+    elif dataset == "hover":
+        data_dir = "/home/sasokan/b-sprabhu/datasets/multihop/hover/original_data/"
+        lbl_file = "/data/datasets/beir/hotpotqa/corpus.jsonl"
+        save_dir = "/home/sasokan/b-sprabhu/datasets/multihop/hover/XC/"
+        trn_data, tst_data, lbl_data = process_hover(data_dir, lbl_file, save_dir)
+
+    elif dataset == "exfever":
+        data_dir = "/home/sasokan/b-sprabhu/datasets/multihop/exfever/original_data/"
+        lbl_file = "/data/datasets/beir/fever/corpus.jsonl"
+        save_dir = "/home/sasokan/b-sprabhu/datasets/multihop/exfever/XC/"
+        trn_data, tst_data, lbl_data = process_exfever(data_dir, lbl_file, save_dir)
+
+    elif dataset == "morehopqa":
+        data_dir = "/home/sasokan/b-sprabhu/datasets/multihop/morehopqa/original_data/"
+        save_dir = "/home/sasokan/b-sprabhu/datasets/multihop/morehopqa/XC/"
+        trn_data, tst_data, lbl_data = process_morehopqa(data_dir, save_dir)
+
+    else:
+        raise ValueError(f"Invalid dataset: {dataset}")
     
