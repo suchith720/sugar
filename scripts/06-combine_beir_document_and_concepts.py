@@ -58,14 +58,18 @@ def save_raw_txt(fname, raw, sep:Optional[str]='->', encoding:Optional[str]='utf
 
 
 if __name__ == "__main__":
-    data_dir = "/home/yprabhu/suchith/datasets/beir/"
-    save_file = "/data/desaini/Research/OAK/v1/MOGIC/Paper/09-beir_queries/samples/samples.raw.txt"
+    # data_dir = "/home/yprabhu/suchith/datasets/beir/"
+    # save_file = "/data/desaini/Research/OAK/v1/MOGIC/Paper/09-beir_queries/samples/samples.raw.txt"
 
-    examples = main(data_dir, n_samples=5)
+    data_dir = "/home/sasokan/b-sprabhu/datasets/beir/"
+    # save_file = "/home/sasokan/b-sprabhu/datasets/processed/papyrus/09-beir_queries/samples/samples.raw.txt"
+    save_file = "/home/sasokan/b-sprabhu/datasets/processed/papyrus/09-beir_queries/labels.raw.txt"
+
+    os.makedirs(os.path.dirname(save_file), exist_ok=True)
+
+    examples = main(data_dir)
 
     df = pd.DataFrame(examples)
     raw = [df["Identifier"].tolist(), df["Document"].tolist(), df["Concepts"].tolist()]
     save_raw_txt(save_file, raw, sep="\t")
-
-
 
