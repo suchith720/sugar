@@ -2,7 +2,8 @@
 
 # %% auto 0
 __all__ = ['load_jsonl', 'load_json', 'load_musique_raw', 'process_musique', 'load_2wikimultihopqa_raw',
-           'process_2wikimultihopqa', 'load_morehopqa_raw', 'process_morehopqa']
+           'process_2wikimultihopqa', 'load_morehopqa_raw', 'process_morehopqa', 'load_multihoprag_raw',
+           'process_multihoprag']
 
 # %% ../nbs/30_multihop-datasets.ipynb 1
 import pandas as pd, os, json, numpy as np, scipy.sparse as sp, re
@@ -186,4 +187,50 @@ def process_morehopqa(data_dir:str, save_dir:str):
     save_raw_file(f"{save_dir}/raw_data/label.raw.csv", lbl_ids, lbl_txt)
 
     return (trn_ids, trn_txt, trn_lbl), (tst_ids, tst_txt, tst_lbl), (lbl_ids, lbl_txt)
+    
+
+# %% ../nbs/30_multihop-datasets.ipynb 45
+def load_multihoprag_raw(fname:str, vocab:Dict):
+    raw_data = load_json(fname)
+
+    qry_ids, qry_txt = [], []
+    
+    data, indices, indptr = [], [], [0]
+    
+    for i,o in tqdm(enumerate(raw_data), total=len(raw_data)):
+        qry_ids.append(i)
+        qry_txt.append(o["query"])
+        
+        labels = [k["title"] for k in o["evidence_list"]]
+        
+        for lbl in labels:
+            assert lbl in vocab, f"`{lbl}` not present in the corpus."
+            
+            idx = vocab[lbl]
+            data.append(1.0)
+            indices.append(idx)
+                
+        indptr.append(len(indices))
+        
+    matrix = sp.csr_matrix((data, indices, indptr), shape=(len(indptr) - 1, len(vocab)))
+    return qry_ids, qry_txt, matrix
+    
+
+# %% ../nbs/30_multihop-datasets.ipynb 46
+def process_multihoprag(data_dir:str, save_dir:str):
+    labels = load_json(f"{data_dir}/corpus.json")
+    vocab = {o["title"]:i for i,o in enumerate(labels)}
+    
+    tst_ids, tst_txt, tst_lbl = load_multihoprag_raw(f"{data_dir}/MultiHopRAG.json", vocab)
+    
+    os.makedirs(f"{save_dir}/raw_data", exist_ok=True)
+
+    save_raw_file(f"{save_dir}/raw_data/test.raw.csv", tst_ids, tst_txt)
+    sp.save_npz(f"{save_dir}/tst_X_Y.npz", tst_lbl)
+
+    lbl_txt = [f"{o['title']} [SEP] {o['author']} [SEP] {o['source']} [SEP] {o['category']} [SEP] {o['body']}" for o in labels]
+    lbl_ids = list(range(len(lbl_txt)))
+    save_raw_file(f"{save_dir}/raw_data/label.raw.csv", lbl_ids, lbl_txt)
+
+    return (tst_ids, tst_txt, tst_lbl), (lbl_ids, lbl_txt)
     
