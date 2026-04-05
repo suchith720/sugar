@@ -1,13 +1,16 @@
 #!/bin/bash
 
-datasets="msmarco arguana climate-fever dbpedia-entity fever fiqa hotpotqa nfcorpus nq quora scidocs scifact webis-touche2020 trec-covid \
-	cqadupstack/android cqadupstack/english cqadupstack/gaming cqadupstack/gis cqadupstack/mathematica cqadupstack/physics \
-	cqadupstack/programmers cqadupstack/stats cqadupstack/tex cqadupstack/unix cqadupstack/webmasters cqadupstack/wordpress"
+datasets="arguana dbpedia-entity fever fiqa hotpotqa nfcorpus nq quora scidocs scifact webis-touche2020 trec-covid \
+	  cqadupstack/android cqadupstack/english cqadupstack/gaming cqadupstack/gis cqadupstack/mathematica cqadupstack/physics \
+	  cqadupstack/programmers cqadupstack/stats cqadupstack/tex cqadupstack/unix cqadupstack/webmasters cqadupstack/wordpress msmarco"
 
 for dset in $datasets
 do
 	data_dir="/data/datasets/beir"
-	save_dir="/data/datasets/beir"
+	save_dir="/data/suchith/datasets/beir/"
+	# save_dir="/data/datasets/beir/"
+
+	echo python sugar/21_beir-dataset.py --data_dir $data_dir/$dset/ --save_dir $save_dir/$dset/XC/ 
 
 	python sugar/21_beir-dataset.py --data_dir $data_dir/$dset/ --save_dir $save_dir/$dset/XC/ 
 

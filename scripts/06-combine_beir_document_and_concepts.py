@@ -23,7 +23,7 @@ def get_examples(lbl_file:str, data_dir:str, n_samples:Optional[int]=None):
         lbl_idxs = np.random.permutation(lbl_idxs)[:n_samples]
 
     examples = []
-    for idx in np.random.permutation(lbl_idxs)[:10]:
+    for idx in lbl_idxs:
         lbl_concepts = [concept_txt[c] for c in lbl_concept[idx].indices]
         example = {
             "Identifier": lbl_ids[idx],
