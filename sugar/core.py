@@ -2,8 +2,8 @@
 
 # %% auto 0
 __all__ = ['load_raw_txt', 'load_raw_csv', 'load_raw_file', 'load_json', 'load_jsonl', 'get_all_ids', 'filter_mapping',
-           'create_vocab_and_item2idx', 'save_raw_txt', 'save_raw_csv', 'save_raw_file', 'save_llm_input',
-           'get_matrix_from_item2idx', 'get_matrix_from_mapping']
+           'create_vocab_and_item2idx', 'save_raw_txt', 'save_raw_csv', 'save_raw_file', 'save_file_for_generations',
+           'save_llm_input', 'get_matrix_from_item2idx', 'get_matrix_from_mapping']
 
 # %% ../nbs/00_core.ipynb 2
 import scipy.sparse as sp, numpy as np, pandas as pd, json
@@ -95,7 +95,20 @@ def save_raw_file(fname, ids, raw, id_name:Optional[str]="identifier", raw_name:
         raise ValueError(f"Invalid filename: {fname}.")
             
 
-# %% ../nbs/00_core.ipynb 13
+# %% ../nbs/00_core.ipynb 14
+def save_file_for_generations(fname, inputs:List, sep:Optional[str]="\t", encoding:Optional[str]='utf-8'):
+    sizes = np.array([len(o) for o in inputs])
+    assert np.all(sizes == sizes[0]), "Number of elements in each input should be the same."
+    with open(fname, 'w', encoding=encoding) as file:
+        for o in zip(*inputs):
+            line = ""
+            for i in o:
+                i = str(i).replace("\n", "").replace("\t", "").replace("->", "")
+                line = line + sep + i if len(line) else i
+            file.write(f'{line}\n')
+            
+
+# %% ../nbs/00_core.ipynb 16
 def save_llm_input(fname:str, items:List, sep:Optional[str]='->', encoding:Optional[str]='utf-8'):
     for o in items: assert len(items[0]) == len(o), "Number of entities in all the items should be equal."
     with open(fname, 'w', encoding=encoding) as file:
@@ -108,7 +121,7 @@ def save_llm_input(fname:str, items:List, sep:Optional[str]='->', encoding:Optio
             file.write(line + '\n')
             
 
-# %% ../nbs/00_core.ipynb 15
+# %% ../nbs/00_core.ipynb 18
 def get_matrix_from_item2idx(mapping, vocab_size, ids=None):
     data, indices, indptr = [], [], [0]
     ids = list(mapping) if ids is None else ids
@@ -121,7 +134,7 @@ def get_matrix_from_item2idx(mapping, vocab_size, ids=None):
     return sp.csr_matrix((data, indices, indptr), shape=(len(ids), vocab_size), dtype=np.int64), ids
     
 
-# %% ../nbs/00_core.ipynb 17
+# %% ../nbs/00_core.ipynb 20
 def get_matrix_from_mapping(mapping, ids=None):
     if ids is not None:
         mapping = filter_mapping(mapping, ids)
